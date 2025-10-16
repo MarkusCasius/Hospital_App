@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.hospimanagmenetapp">
+
+    <!-- Network access (harmless for Lab 1) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- LAB 2 ONLY: Biometric permission -->
+    <!-- <uses-permission android:name="android.permission.USE_BIOMETRIC" /> -->
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="HospiManagmenetApp"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <!-- Launcher / entry point -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Lab 1 screens -->
+        <activity
+            android:name=".ui.PatientRegistrationActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".ui.AdminLoginActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".ui.AdminPortalActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.AdminLoginActivity" />
+
+        <!-- LAB 2 ONLY: Appointments host -->
+        <!--
+        <activity
+            android:name=".feature.appointments.ui.AppointmentActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        -->
+    </application>
+</manifest>
