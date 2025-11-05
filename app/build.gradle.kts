@@ -51,6 +51,12 @@ dependencies { // Libraries this module depends on
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.6") // LiveData for observable data holders
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.6") // ViewModel for UI-related state
 
+    // Retrofit / OkHttp (mock + logging)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     // SQLCipher (Lab 1 basic-at-rest security placeholder)
     implementation("net.zetetic:android-database-sqlcipher:4.5.4") // Encrypted SQLite via SQLCipher
     implementation("androidx.sqlite:sqlite:2.4.0") // AndroidX SQLite wrappers/utilities
