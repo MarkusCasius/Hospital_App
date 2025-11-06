@@ -1,4 +1,4 @@
-package com.example.hospimanagmenetapp.ui.adapters;
+package com.example.hospimanagmenetapp.feature.appointments.ui.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;

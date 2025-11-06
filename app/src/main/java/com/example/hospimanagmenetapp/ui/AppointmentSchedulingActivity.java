@@ -8,9 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.AppDatabase;
-import com.example.hospimanagmenetapp.data.entities.Staff;
-import com.example.hospimanagmenetapp.ui.adapters.AppointmentAdapter;
-import com.example.hospimanagmenetapp.ui.adapters.StaffAdapter;
+import com.example.hospimanagmenetapp.feature.appointments.ui.adapters.AppointmentAdapter;
 
 import java.util.List;
 import java.util.concurrent.Executors;

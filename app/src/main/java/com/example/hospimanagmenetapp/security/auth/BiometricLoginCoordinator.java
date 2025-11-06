@@ -6,6 +6,7 @@ import android.content.Context;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import java.util.concurrent.Executor;
 
@@ -25,7 +26,7 @@ public class BiometricLoginCoordinator {
         }
 
         Executor ex = ContextCompat.getMainExecutor(activity);
-        BiometricPrompt prompt = new BiometricPrompt(activity, ex,
+        BiometricPrompt prompt = new BiometricPrompt((FragmentActivity) activity, ex,
                 new BiometricPrompt.AuthenticationCallback() {
                     @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                         cb.onSuccess();
