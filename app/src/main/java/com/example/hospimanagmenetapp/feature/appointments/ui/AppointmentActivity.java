@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.example.hospimanagmenetapp.AppointmentSeeder;
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.security.auth.BiometricLoginCoordinator;
 import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
@@ -15,6 +16,7 @@ public class AppointmentActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_appointment);
+        AppointmentSeeder.seed(this);
 
         if (!RbacPolicyEvaluator.canViewAppointments(this)) {
             Toast.makeText(this, "Access denied. Please sign in with a permitted role.", Toast.LENGTH_LONG).show();
@@ -32,7 +34,12 @@ public class AppointmentActivity extends AppCompatActivity {
             }
             @Override public void onFailure(String reason) {
                 Toast.makeText(AppointmentActivity.this, "Biometric required: " + reason, Toast.LENGTH_LONG).show();
-                finish();
+                if (savedInstanceState == null) {
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.appointmentContainer, new AppointmentListFragment())
+                            .commit();
+//                finish();
+                }
             }
         });
     }

@@ -17,7 +17,7 @@ public class BiometricLoginCoordinator {
         void onFailure(String reason);
     }
 
-    public void authenticate(Activity activity, Callback cb) {
+    public void authenticate(FragmentActivity activity, Callback cb) {
         BiometricManager bm = BiometricManager.from(activity);
         int can = bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG);
         if (can != BiometricManager.BIOMETRIC_SUCCESS) {
@@ -26,7 +26,7 @@ public class BiometricLoginCoordinator {
         }
 
         Executor ex = ContextCompat.getMainExecutor(activity);
-        BiometricPrompt prompt = new BiometricPrompt((FragmentActivity) activity, ex,
+        BiometricPrompt prompt = new BiometricPrompt(activity, ex,
                 new BiometricPrompt.AuthenticationCallback() {
                     @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                         cb.onSuccess();

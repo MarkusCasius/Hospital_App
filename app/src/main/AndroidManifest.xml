@@ -44,11 +44,11 @@
             android:parentActivityName=".ui.AdminLoginActivity" />
 
         <!-- LAB 2 ONLY: Appointments host -->
-        <!--
+
         <activity
             android:name=".feature.appointments.ui.AppointmentActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
-        -->
+
     </application>
 </manifest>

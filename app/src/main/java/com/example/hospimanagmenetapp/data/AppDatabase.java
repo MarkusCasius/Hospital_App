@@ -12,7 +12,7 @@ import com.example.hospimanagmenetapp.data.entities.Patient; // Entity mapped to
 import com.example.hospimanagmenetapp.data.entities.Staff;   // Entity mapped to a table
 import com.example.hospimanagmenetapp.data.entities.Appointment; // Entity mapped to a table
 
-@Database(entities = {Patient.class, Staff.class}, version = 1, exportSchema = false)
+@Database(entities = {Patient.class, Staff.class, Appointment.class}, version = 1, exportSchema = false)
 //  Declares the Room database: which entities it manages, the schema version,
 //   and whether to export the schema as JSON for tooling (false = do not export).
 public abstract class AppDatabase extends RoomDatabase { // Concrete DB extends RoomDatabase
