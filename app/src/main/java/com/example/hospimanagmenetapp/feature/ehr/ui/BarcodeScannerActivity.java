@@ -7,7 +7,7 @@ import com.journeyapps.barcodescanner.BarcodeResult;
 import com.journeyapps.barcodescanner.CaptureActivity;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 import com.journeyapps.barcodescanner.BarcodeCallback;
-import com.google.zxing.Result;
+// import com.google.zxing.Result;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class BarcodeScannerActivity extends AppCompatActivity {
@@ -18,7 +18,8 @@ public class BarcodeScannerActivity extends AppCompatActivity {
         setContentView(barcodeView);
         barcodeView.decodeContinuous(new BarcodeCallback() {
 
-            @Override public void barcodeResult(Result result) {
+
+            @Override public void barcodeResult(BarcodeResult result) { // Changed from 'Result' to 'BarcodeResult'
                 barcodeView.pause();
                 Intent i = new Intent(BarcodeScannerActivity.this, PatientSummaryActivity.class);
                 i.putExtra("nhsNumber", result.getText());
@@ -26,6 +27,18 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+    // It's good practice to manage the scanner's lifecycle with the activity
+    @Override
+    protected void onResume() {
+        super.onResume();
+        barcodeView.resume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        barcodeView.pause();
     }
 }
 

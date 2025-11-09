@@ -24,15 +24,19 @@
 
         <EditText
             android:id="@+id/etStartMillis"
-            android:hint="Start time (epoch millis)"
-            android:inputType="number"
+            android:hint="Select start time"
+            android:focusable="false"
+            android:clickable="true"
+            android:longClickable="false"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <EditText
             android:id="@+id/etEndMillis"
-            android:hint="End time (epoch millis)"
-            android:inputType="number"
+            android:hint="Select end time"
+            android:focusable="false"
+            android:clickable="true"
+            android:longClickable="false"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 

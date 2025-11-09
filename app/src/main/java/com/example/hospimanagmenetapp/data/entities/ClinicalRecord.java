@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey;
 )
 public class ClinicalRecord {
     @NonNull
+    @PrimaryKey
     public String patientNhsNumber;
     public String problems;
     public String allergies;

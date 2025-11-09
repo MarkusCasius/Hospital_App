@@ -29,10 +29,10 @@ public class AppointmentSeeder {
                 a.endTime = a.startTime + 45 * 60 * 1000;
                 a.clinicianId = 1000 + (i % 3);
                 a.clinicianName = "Dr. Test " + (char) ('A' + i);
-                a.clinic = (i % 2 == 0) ? "Clinic North" : "Clinic South";
+                a.clinic = (i % 2 == 0) ? "Surgery A" : "Surgery B";
                 a.status = (i % 4 == 0) ? "CANCELLED" : "BOOKED";
 
-                db.appointmentDao().insert(a);
+                db.appointmentDao().upsert(a);
             }
 
             prefs.edit().putBoolean(KEY_SEEDED, true).apply();

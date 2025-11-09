@@ -34,10 +34,18 @@ public class AppointmentRepository {
         }
         // cache to DB (simplified: insert if none today)
         for (Appointment a : mapped) {
-            dao.insert(a);
+            dao.upsert(a);
+        }
+
+        if (clinic != null) {
+            // If a specific clinic is provided, use the filtering query
+            return dao.getAppointmentsByClinicBetween(clinic, start, end);
+        } else {
+            // If clinic is null (i.e., "All Clinics" was selected), get all appointments
+            return dao.getAllAppointmentsBetween(start, end);
         }
         // return from DB (source of truth)
-        return dao.findBetween(start, end);
+        // return dao.findBetween(start, end);
     }
 
     public Appointment bookOrReschedule(Appointment appt) throws Exception {
@@ -57,7 +65,7 @@ public class AppointmentRepository {
             if (saved.id == 0) { // mock may return id=0, keep local
                 saved.id = appt.id;
             }
-            if (appt.id == 0) dao.insert(saved); else dao.update(saved);
+            if (appt.id == 0) dao.upsert(saved); else dao.update(saved);
             return saved;
         } else {
             throw new IllegalStateException("Booking failed");

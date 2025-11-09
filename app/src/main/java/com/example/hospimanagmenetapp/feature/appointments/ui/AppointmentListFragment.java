@@ -37,8 +37,19 @@ public class AppointmentListFragment extends Fragment {
                 new String[]{"All Clinics","Surgery A","Surgery B"});
         spClinic.setAdapter(clinics);
 
+        spClinic.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                loadData();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+
         v.findViewById(R.id.btnRefresh).setOnClickListener(b -> loadData());
-        loadData();
         return v;
     }
 
