@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:required="http://schemas.android.com/apk/distribution"
     package="com.example.hospimanagmenetapp">
 
     <!-- Network access (harmless for Lab 1) -->
@@ -7,6 +8,12 @@
 
     <!-- LAB 2 ONLY: Biometric permission -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- LAB 3 -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -47,6 +54,18 @@
 
         <activity
             android:name=".feature.appointments.ui.AppointmentActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Lab 3 -->
+
+        <activity android:name=".feature.ehr.ui.PatientSummaryActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        <activity android:name=".feature.ehr.ui.BarcodeScannerActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        <activity android:name=".feature.ehr.ui.VitalsActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 

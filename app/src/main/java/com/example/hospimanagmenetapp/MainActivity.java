@@ -15,7 +15,7 @@ import com.example.hospimanagmenetapp.util.SessionManager;          // Helper fo
 public class MainActivity extends AppCompatActivity { // Entry Activity shown at app launch
 
     private TextView tvWelcome;       // Header showing session state
-    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments; // Main menu buttons
+    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments, btnPatientRecords; // Main menu buttons
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Lifecycle: called when Activity is created

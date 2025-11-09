@@ -16,4 +16,15 @@ public class RbacPolicyEvaluator {
         String role = SessionManager.getCurrentRole(ctx);
         return "ADMIN".equals(role) || "RECEPTION".equals(role);
     }
+
+    // Lab 3 Functions
+    public static boolean canViewEhr(Context ctx) {
+        String role = SessionManager.getCurrentRole(ctx);
+        return "ADMIN".equals(role) || "RECEPTION".equals(role) || "CLINICIAN".equals(role);
+    }
+
+    public static boolean canEditEhr(Context ctx) {
+        String role = SessionManager.getCurrentRole(ctx);
+        return "ADMIN".equals(role) ||  "CLINICIAN".equals(role);
+    }
 }
