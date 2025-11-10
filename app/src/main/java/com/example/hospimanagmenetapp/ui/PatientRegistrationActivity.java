@@ -12,19 +12,18 @@ import android.widget.Toast;     // Lightweight user notifications
 import com.example.hospimanagmenetapp.R;                    // Resource IDs (layouts, strings, etc.)
 import com.example.hospimanagmenetapp.data.AppDatabase;     // Room database singleton
 import com.example.hospimanagmenetapp.data.entities.Patient; // Entity to persist
+import com.example.hospimanagmenetapp.util.DatePickerUtils;
 import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.example.hospimanagmenetapp.util.ValidationUtils; // NHS number validator
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.concurrent.Executors; // For running DB work off the main thread
 
 public class PatientRegistrationActivity extends AppCompatActivity { // Screen to capture and save a patient
 
     private EditText etNhs, etFullName, etDob, etPhone, etEmail; // Form inputs
     private Button btnSave;                                      // Save action
-    private final Calendar selectedDate = Calendar.getInstance();
+    private final Calendar dobCalendar = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
@@ -38,29 +37,9 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
         etPhone = findViewById(R.id.etPhone);
         etEmail = findViewById(R.id.etEmail);
         btnSave = findViewById(R.id.btnSavePatient);
-        etDob.setOnClickListener(v -> showDatePickerDialog());
+        etDob.setOnClickListener(v -> DatePickerUtils.showDatePickerDialog(this, etDob, dobCalendar));
 
         btnSave.setOnClickListener(v -> savePatient()); // When tapped, validate and persist the patient
-    }
-
-    private void showDatePickerDialog() {
-        DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
-            // Update the Calendar instance with the selected date
-            selectedDate.set(Calendar.YEAR, year);
-            selectedDate.set(Calendar.MONTH, month);
-            selectedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-            // Format the date into "yyyy-MM-dd" and update the EditText
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.UK);
-            etDob.setText(sdf.format(selectedDate.getTime()));
-        };
-
-        // Create the DatePickerDialog, pre-filled with the current selected date
-        new DatePickerDialog(this, dateSetListener,
-                selectedDate.get(Calendar.YEAR),
-                selectedDate.get(Calendar.MONTH),
-                selectedDate.get(Calendar.DAY_OF_MONTH))
-                .show();
     }
 
     // Validate inputs and insert the patient into Room on a background thread

@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- LAB 2 ONLY: Biometric permission -->
-    <!-- <uses-permission android:name="android.permission.USE_BIOMETRIC" /> -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
         android:allowBackup="false"
@@ -14,7 +14,8 @@
         android:label="HospiManagmenetApp"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+        android:networkSecurityConfig="@xml/network_security_config">
 
         <!-- Launcher / entry point -->
         <activity
@@ -43,11 +44,10 @@
             android:parentActivityName=".ui.AdminLoginActivity" />
 
         <!-- LAB 2 ONLY: Appointments host -->
-        <!--
         <activity
-            android:name=".feature.appointments.ui.AppointmentActivity"
+            android:name=".ui.AppointmentActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
-        -->
+
     </application>
 </manifest>

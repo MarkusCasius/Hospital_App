@@ -20,6 +20,7 @@ import com.example.hospimanagmenetapp.ui.adapters.StaffAdapter; // RecyclerView 
 import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.example.hospimanagmenetapp.util.SessionManager;   // Simple session storage for RBAC checks
 
+import java.util.ArrayList;
 import java.util.Arrays;             // Utility to turn arrays into Lists
 import java.util.List;               // List interface for collections
 import java.util.concurrent.Executors; // Run DB work off the main thread
@@ -98,7 +99,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
                 EncryptionManager encryptionManager = new EncryptionManager();
 
                 String encryptedName = encryptionManager.encrypt(name);
-                String encryptedEmail = encryptionManager.encrypt(name);
+                String encryptedEmail = encryptionManager.encrypt(email);
                 String encryptedPin = encryptionManager.encrypt(pin);
 
                 StaffDao dao = AppDatabase.getInstance(getApplicationContext()).staffDao(); // DAO handle
@@ -128,8 +129,33 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
     // Fetch all staff from the DB and display them in the RecyclerView
     private void loadStaff() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            List<Staff> list = AppDatabase.getInstance(getApplicationContext()).staffDao().getAll(); // Read from Room
-            runOnUiThread(() -> rvStaff.setAdapter(new StaffAdapter(list))); // Bind adapter on UI thread
+            try {
+                // Fetch all staff from the database
+                List<Staff> encryptedList = AppDatabase.getInstance(getApplicationContext()).staffDao().getAll();
+                EncryptionManager encryptionManager = new EncryptionManager();
+                List<Staff> decryptedList = new ArrayList<>();
+
+                for (Staff encryptedStaff : encryptedList) {
+                    Staff decryptedStaff = new Staff();
+                    decryptedStaff.id = encryptedStaff.id;
+                    decryptedStaff.role = encryptedStaff.role;
+                    decryptedStaff.adminPin = encryptedStaff.adminPin;
+
+                    decryptedStaff.fullName = encryptionManager.decrypt(encryptedStaff.fullName);
+                    decryptedStaff.email = encryptionManager.decrypt(encryptedStaff.email);
+
+
+                    decryptedList.add(decryptedStaff);
+                }
+
+                // Pass the DECRYPTED list to the adapter on the UI thread
+                runOnUiThread(() -> rvStaff.setAdapter(new StaffAdapter(decryptedList)));
+
+            } catch (Exception e) {
+                // If decryption or database access fails, show an error
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Failed to load and decrypt staff data.", Toast.LENGTH_LONG).show());
+            }
         });
     }
 }
