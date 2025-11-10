@@ -7,8 +7,6 @@ import androidx.room.Query;              // Annotation for custom SQL queries
 
 import com.example.hospimanagmenetapp.data.entities.Patient; // Entity this DAO operates on
 
-import java.util.List;
-
 @Dao // Tells Room to generate the implementation at compile time
 public interface PatientDao {
 
@@ -17,9 +15,4 @@ public interface PatientDao {
 
     @Query("SELECT COUNT(*) FROM patients WHERE nhsNumber = :nhsNumber") // Parameterised SQL; :nhsNumber is bound from the method arg
     int countByNhs(String nhsNumber);   // Quick existence check (0 = none, >0 = exists)
-
-
-    @Query("SELECT * FROM patients")
-    List<Patient> getAllPatients();
-
 }

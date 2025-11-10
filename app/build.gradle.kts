@@ -51,12 +51,6 @@ dependencies { // Libraries this module depends on
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.6") // LiveData for observable data holders
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.6") // ViewModel for UI-related state
 
-    // Retrofit / OkHttp (mock + logging)
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-
     // SQLCipher (Lab 1 basic-at-rest security placeholder)
     implementation("net.zetetic:android-database-sqlcipher:4.5.4") // Encrypted SQLite via SQLCipher
     implementation("androidx.sqlite:sqlite:2.4.0") // AndroidX SQLite wrappers/utilities
@@ -69,17 +63,6 @@ dependencies { // Libraries this module depends on
 
     // --- Lab 2: Biometric authentication ---
     implementation("androidx.biometric:biometric:1.2.0-alpha05") // BiometricPrompt APIs for fingerprint/face auth
-
-    // --- Lab 3 ---
-    // Paging
-    implementation("androidx.paging:paging-runtime:3.3.2")
-    // WorkManager (offline queue)
-    implementation("androidx.work:work-runtime:2.9.1")
-    // Barcode scanning (ZXing)
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.google.zxing:core:3.5.3")
-    // Accessibility annotations
-    implementation("androidx.annotation:annotation:1.9.1")
 
     // Tests (version catalogue)
     testImplementation(libs.junit) // JUnit 4 for local unit tests
