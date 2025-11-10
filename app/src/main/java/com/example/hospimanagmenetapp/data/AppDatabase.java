@@ -5,12 +5,18 @@ import androidx.room.Room;              // Factory for creating Room databases
 import androidx.room.RoomDatabase;      // Base class for Room databases
 import android.content.Context;         // Needed to build the DB with an app Context
 
+import com.example.hospimanagmenetapp.data.dao.AppointmentDao;
+import com.example.hospimanagmenetapp.data.dao.ClinicalRecordDao;
 import com.example.hospimanagmenetapp.data.dao.PatientDao; // DAO for Patient operations
 import com.example.hospimanagmenetapp.data.dao.StaffDao;   // DAO for Staff operations
+import com.example.hospimanagmenetapp.data.dao.VitalsDao;
 import com.example.hospimanagmenetapp.data.entities.Patient; // Entity mapped to a table
 import com.example.hospimanagmenetapp.data.entities.Staff;   // Entity mapped to a table
+import com.example.hospimanagmenetapp.data.entities.Appointment; // Entity mapped to a table
+import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
+import com.example.hospimanagmenetapp.data.entities.Vitals;
 
-@Database(entities = {Patient.class, Staff.class}, version = 1, exportSchema = false)
+@Database(entities = {Patient.class, Staff.class, Appointment.class, ClinicalRecord.class, Vitals.class}, version = 3, exportSchema = false)
 //  Declares the Room database: which entities it manages, the schema version,
 //   and whether to export the schema as JSON for tooling (false = do not export).
 public abstract class AppDatabase extends RoomDatabase { // Concrete DB extends RoomDatabase
@@ -21,6 +27,9 @@ public abstract class AppDatabase extends RoomDatabase { // Concrete DB extends 
     // Room generates the implementation; these expose your DAOs to callers
     public abstract PatientDao patientDao();
     public abstract StaffDao staffDao();
+    public abstract AppointmentDao appointmentDao();
+    public abstract ClinicalRecordDao clinicalRecordDao();
+    public abstract VitalsDao vitalsDao();
 
     // Thread-safe double-checked locking to get/create the singleton DB
     public static AppDatabase getInstance(Context context) {

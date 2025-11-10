@@ -15,7 +15,7 @@ import com.example.hospimanagmenetapp.util.SessionManager;          // Helper fo
 public class MainActivity extends AppCompatActivity { // Entry Activity shown at app launch
 
     private TextView tvWelcome;       // Header showing session state
-    private Button btnPatientRegistration, btnAdminPortal, btnLogout; // Main menu buttons
+    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments, btnPatientRecords; // Main menu buttons
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Lifecycle: called when Activity is created
@@ -27,6 +27,10 @@ public class MainActivity extends AppCompatActivity { // Entry Activity shown at
         btnPatientRegistration = findViewById(R.id.btnPatientRegistration);
         btnAdminPortal = findViewById(R.id.btnAdminPortal);
         btnLogout = findViewById(R.id.btnLogout);
+        btnAppointments = findViewById(R.id.btnAppointments);
+
+        btnAppointments.setOnClickListener(v ->
+                startActivity(new Intent(this, com.example.hospimanagmenetapp.feature.appointments.ui.AppointmentActivity.class)));
 
         refreshHeader(); // Show current sign-in state immediately
 

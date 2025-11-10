@@ -28,8 +28,29 @@
         android:layout_height="wrap_content" />
 
     <Button
+        android:id="@+id/btnAppointments"
+        android:text="Appointments"
+        android:layout_marginTop="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
         android:id="@+id/btnLogout"
         android:text="Clear Session"
+        android:layout_marginTop="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btnAppointment"
+        android:text="Book Appointment"
+        android:layout_marginTop="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btnPatientRecords"
+        android:text="Patient Records"
         android:layout_marginTop="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
