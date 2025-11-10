@@ -29,7 +29,10 @@
                 android:layout_width="match_parent" android:layout_height="wrap_content"/>
 
             <EditText android:id="@+id/etDob" android:hint="Date of Birth (yyyy-MM-dd)"
-                android:inputType="date"
+                android:inputType="none"
+                android:focusable="false"
+                android:clickable="true"
+                android:longClickable="false"
                 android:layout_width="match_parent" android:layout_height="wrap_content"/>
 
             <EditText android:id="@+id/etPhone" android:hint="Phone" android:inputType="phone"

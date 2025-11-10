@@ -2,6 +2,7 @@ package com.example.hospimanagmenetapp.ui; // UI layer package for Activities
 
 import androidx.appcompat.app.AppCompatActivity; // Base class for Activities with AppCompat support
 
+import android.app.DatePickerDialog;
 import android.os.Bundle;        // Lifecycle state bundle
 import android.text.TextUtils;   // Utility for simple string emptiness checks
 import android.widget.Button;    // UI widget: Button
@@ -11,14 +12,19 @@ import android.widget.Toast;     // Lightweight user notifications
 import com.example.hospimanagmenetapp.R;                    // Resource IDs (layouts, strings, etc.)
 import com.example.hospimanagmenetapp.data.AppDatabase;     // Room database singleton
 import com.example.hospimanagmenetapp.data.entities.Patient; // Entity to persist
+import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.example.hospimanagmenetapp.util.ValidationUtils; // NHS number validator
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.Executors; // For running DB work off the main thread
 
 public class PatientRegistrationActivity extends AppCompatActivity { // Screen to capture and save a patient
 
     private EditText etNhs, etFullName, etDob, etPhone, etEmail; // Form inputs
     private Button btnSave;                                      // Save action
+    private final Calendar selectedDate = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
@@ -32,8 +38,29 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
         etPhone = findViewById(R.id.etPhone);
         etEmail = findViewById(R.id.etEmail);
         btnSave = findViewById(R.id.btnSavePatient);
+        etDob.setOnClickListener(v -> showDatePickerDialog());
 
         btnSave.setOnClickListener(v -> savePatient()); // When tapped, validate and persist the patient
+    }
+
+    private void showDatePickerDialog() {
+        DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
+            // Update the Calendar instance with the selected date
+            selectedDate.set(Calendar.YEAR, year);
+            selectedDate.set(Calendar.MONTH, month);
+            selectedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+            // Format the date into "yyyy-MM-dd" and update the EditText
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.UK);
+            etDob.setText(sdf.format(selectedDate.getTime()));
+        };
+
+        // Create the DatePickerDialog, pre-filled with the current selected date
+        new DatePickerDialog(this, dateSetListener,
+                selectedDate.get(Calendar.YEAR),
+                selectedDate.get(Calendar.MONTH),
+                selectedDate.get(Calendar.DAY_OF_MONTH))
+                .show();
     }
 
     // Validate inputs and insert the patient into Room on a background thread
@@ -60,6 +87,14 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
         // Run database I/O off the main thread to keep the UI responsive
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
+                EncryptionManager encryptionManager = new EncryptionManager();
+
+                // Encrypt the sensitive fields
+                String encryptedName = encryptionManager.encrypt(name);
+                String encryptedDob = encryptionManager.encrypt(dob);
+                String encryptedPhone = encryptionManager.encrypt(phone);
+                String encryptedEmail = encryptionManager.encrypt(email);
+
                 AppDatabase db = AppDatabase.getInstance(getApplicationContext()); // Get the Room singleton
 
                 // Enforce uniqueness by NHS number before inserting
@@ -72,10 +107,10 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
                 // Map form inputs to a new Patient entity
                 Patient p = new Patient();
                 p.nhsNumber = nhs;
-                p.fullName = name;
-                p.dateOfBirth = dob; // Consider normalising/validating format upstream
-                p.phone = phone;
-                p.email = email;
+                p.fullName = encryptedName;
+                p.dateOfBirth = encryptedDob; // Consider normalising/validating format upstream
+                p.phone = encryptedPhone;
+                p.email = encryptedEmail;
                 long now = System.currentTimeMillis(); // Timestamp fields in epoch millis
                 p.createdAt = now;
                 p.updatedAt = now;

@@ -17,11 +17,14 @@ import com.example.hospimanagmenetapp.data.AppDatabase;      // Room database si
 import com.example.hospimanagmenetapp.data.dao.StaffDao;     // DAO for Staff operations
 import com.example.hospimanagmenetapp.data.entities.Staff;   // Staff entity (has Role enum, email, PIN)
 import com.example.hospimanagmenetapp.ui.adapters.StaffAdapter; // RecyclerView adapter to render staff list
+import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.example.hospimanagmenetapp.util.SessionManager;   // Simple session storage for RBAC checks
 
 import java.util.Arrays;             // Utility to turn arrays into Lists
 import java.util.List;               // List interface for collections
 import java.util.concurrent.Executors; // Run DB work off the main thread
+
+import javax.crypto.EncryptedPrivateKeyInfo;
 
 public class AdminPortalActivity extends AppCompatActivity { // Admin portal: manage staff accounts
 
@@ -92,12 +95,18 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
         // Do DB I/O off the main thread
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
+                EncryptionManager encryptionManager = new EncryptionManager();
+
+                String encryptedName = encryptionManager.encrypt(name);
+                String encryptedEmail = encryptionManager.encrypt(name);
+                String encryptedPin = encryptionManager.encrypt(pin);
+
                 StaffDao dao = AppDatabase.getInstance(getApplicationContext()).staffDao(); // DAO handle
                 Staff s = new Staff();          // Create new entity
-                s.fullName = name;              // Map inputs to fields
-                s.email = email;
+                s.fullName = encryptedName;              // Map inputs to fields
+                s.email = encryptedEmail;
                 s.role = role;
-                s.adminPin = (role == Staff.Role.ADMIN) ? pin : null; // Store PIN only for admins
+                s.adminPin = (role == Staff.Role.ADMIN) ? encryptedPin : null; // Store PIN only for admins
 
                 dao.insert(s); // Persist to Room (unique constraints may throw)
 
