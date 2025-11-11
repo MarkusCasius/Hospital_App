@@ -25,14 +25,23 @@ public class AppointmentSeeder {
 
             for (int i = 0; i < 10; i++) {
                 Appointment a = new Appointment();
-                a.patientNhsNumber = "999999999" + i;
-                a.startTime = now + i * 60 * 60 * 1000;
-                a.endTime = a.startTime + 45 * 60 * 1000;
-                a.clinicianId = 1000 + (i % 3);
-                a.clinicianName = "Dr. Test " + (char) ('A' + i);
-                a.clinic = (i % 2 == 0) ? "Surgery A" : "Surgery B";
-                a.status = (i % 4 == 0) ? "CANCELLED" : "BOOKED";
-
+                if (i == 9) {
+                    a.patientNhsNumber = "6574258847";
+                    a.startTime = now + i * 60 * 60 * 1000;
+                    a.endTime = a.startTime + 45 * 60 * 1000;
+                    a.clinicianId = 1000 + (i % 3);
+                    a.clinicianName = "Dr. Test " + (char) ('A' + i);
+                    a.clinic = "Surgery B";
+                    a.status = "BOOKED";
+                } else {
+                    a.patientNhsNumber = "999999999" + i;
+                    a.startTime = now + i * 60 * 60 * 1000;
+                    a.endTime = a.startTime + 45 * 60 * 1000;
+                    a.clinicianId = 1000 + (i % 3);
+                    a.clinicianName = "Dr. Test " + (char) ('A' + i);
+                    a.clinic = (i % 2 == 0) ? "Surgery A" : "Surgery B";
+                    a.status = (i % 4 == 0) ? "CANCELLED" : "BOOKED";
+                }
                 db.appointmentDao().insert(a);
             }
 

@@ -7,15 +7,15 @@ import android.os.Bundle;       // Holds saved instance state for lifecycle
 import android.widget.Button;   // UI widget: Button
 import android.widget.TextView; // UI widget: TextView
 
+import com.example.hospimanagmenetapp.ui.PatientLoginActivity;
 import com.example.hospimanagmenetapp.ui.AdminLoginActivity;        // Screen for admin sign-in
-import com.example.hospimanagmenetapp.ui.AdminPortalActivity;       // Screen for admin features (opened after login)
 import com.example.hospimanagmenetapp.ui.PatientRegistrationActivity; // Screen to register patients
 import com.example.hospimanagmenetapp.util.SessionManager;          // Helper for simple session storage
 
 public class MainActivity extends AppCompatActivity { // Entry Activity shown at app launch
 
     private TextView tvWelcome;       // Header showing session state
-    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments; // Main menu buttons
+    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments, btnPatientLogin; // Main menu buttons
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Lifecycle: called when Activity is created
@@ -24,12 +24,17 @@ public class MainActivity extends AppCompatActivity { // Entry Activity shown at
 
         // Bind views from the layout to fields
         tvWelcome = findViewById(R.id.tvWelcome);
+        btnPatientLogin = findViewById(R.id.btnPatientLogin);
         btnPatientRegistration = findViewById(R.id.btnPatientRegistration);
         btnAdminPortal = findViewById(R.id.btnAdminPortal);
         btnLogout = findViewById(R.id.btnLogout);
         btnAppointments = findViewById(R.id.btnAppointments);
 
         refreshHeader(); // Show current sign-in state immediately
+        // Navigate to patient login
+        btnPatientLogin.setOnClickListener(v ->
+                startActivity(new Intent(this, PatientLoginActivity.class)));
+
 
         // Navigate to the Patient Registration screen
         btnPatientRegistration.setOnClickListener(v ->
@@ -56,7 +61,7 @@ public class MainActivity extends AppCompatActivity { // Entry Activity shown at
     // Update the welcome header with the current session info
     private void refreshHeader() {
         String role = SessionManager.getCurrentRole(this);   // Read stored role (e.g., "ADMIN")
-        String email = SessionManager.getCurrentEmail(this); // Read stored email
+        String email = SessionManager.getCurrentIdentifier(this); // Read stored email
         if (role == null || role.isEmpty()) {                // No session present
             tvWelcome.setText("Welcome (not signed in)");    // Guest view
         } else {

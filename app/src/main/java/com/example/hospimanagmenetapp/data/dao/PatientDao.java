@@ -15,4 +15,7 @@ public interface PatientDao {
 
     @Query("SELECT COUNT(*) FROM patients WHERE nhsNumber = :nhsNumber") // Parameterised SQL; :nhsNumber is bound from the method arg
     int countByNhs(String nhsNumber);   // Quick existence check (0 = none, >0 = exists)
+
+    @Query("SELECT * FROM patients WHERE nhsNumber = :nhsNumber")
+    Patient findByNhs(String nhsNumber);
 }

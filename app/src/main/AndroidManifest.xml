@@ -50,5 +50,9 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 
+        <activity android:name=".ui.PatientLoginActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />"
+
     </application>
 </manifest>
