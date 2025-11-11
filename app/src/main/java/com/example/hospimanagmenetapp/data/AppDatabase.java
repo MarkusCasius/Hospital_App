@@ -23,7 +23,7 @@ public abstract class AppDatabase extends RoomDatabase { // Concrete DB extends 
     // Room generates the implementation; these expose your DAOs to callers
     public abstract PatientDao patientDao();
     public abstract StaffDao staffDao();
-    public abstract AppointmentDao AppointmentDao();
+    public abstract AppointmentDao appointmentDao();
 
     // Thread-safe double-checked locking to get/create the singleton DB
     public static AppDatabase getInstance(Context context) {

@@ -52,7 +52,13 @@ public class AppointmentActivity extends AppCompatActivity {
             }
             @Override public void onFailure(String reason) {
                 Toast.makeText(AppointmentActivity.this, "Biometric required: " + reason, Toast.LENGTH_LONG).show();
-                finish();
+                // Temporary bypass for testing.
+                if (savedInstanceState == null) {
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.appointmentContainer, new AppointmentListFragment())
+                            .commit();
+                }
+                // finish();
             }
         });
     }

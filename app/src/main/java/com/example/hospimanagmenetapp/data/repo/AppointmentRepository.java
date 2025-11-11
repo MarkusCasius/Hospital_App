@@ -19,7 +19,7 @@ public class AppointmentRepository {
     private final ApiClient api;
 
     public AppointmentRepository(Context ctx) {
-        this.dao = AppDatabase.getInstance(ctx).AppointmentDao();
+        this.dao = AppDatabase.getInstance(ctx).appointmentDao();
         this.api = new ApiClient(ctx);
     }
 

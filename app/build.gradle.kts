@@ -11,6 +11,7 @@ android { // Android-specific build configuration for the app module
         versionCode = 1 // Internal version (integer) used for updates
         versionName = "1.0" // Human-readable version shown to users
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" // Runner for instrumented (device) tests
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes { // Definitions of build variants like debug/release
