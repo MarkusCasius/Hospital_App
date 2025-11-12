@@ -1,6 +1,7 @@
 package com.example.hospimanagmenetapp.data.repo;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.dao.AppointmentDao;
@@ -14,6 +15,8 @@ import java.util.List;
 import retrofit2.Response;
 
 public class AppointmentRepository {
+
+    private static final String TAG = "AppointmentRepository";
 
     private final AppointmentDao dao;
     private final ApiClient api;
@@ -52,16 +55,32 @@ public class AppointmentRepository {
         dto.clinic = appt.clinic;
         dto.status = "BOOKED";
 
+        Log.d(TAG, "Attempting to book/reschedule appointment via API. ID: " + dto.id + ", NHS: " + dto.patientNhsNumber);
+
         Response<AppointmentDto> resp = api.appointmentApi().bookOrReschedule(dto).execute();
         if (resp.isSuccessful() && resp.body() != null) {
+            Log.i(TAG, "API call successful. Response code: " + resp.code());
             Appointment saved = map(resp.body());
             if (saved.id == 0) { // mock may return id=0, keep local
                 saved.id = appt.id;
             }
-            if (appt.id == 0) dao.insert(saved); else dao.update(saved);
+
+            Log.d(TAG, "Saving to local DB. Original ID: " + appt.id + ", Saved ID: " + saved.id);
+            if (appt.id == 0) {
+                dao.insert(saved);
+            } else {
+                dao.update(saved);
+            }
             return saved;
         } else {
-            throw new IllegalStateException("Booking failed");
+            // Debugging
+            String errorBody = resp.errorBody() != null ? resp.errorBody().string() : "null";
+            Log.e(TAG, "Booking failed. Response was not successful.");
+            Log.e(TAG, "Response Code: " + resp.code());
+            Log.e(TAG, "Response Message: " + resp.message());
+            Log.e(TAG, "Error Body: " + errorBody);
+
+            throw new IllegalStateException("Booking failed: API returned code " + resp.code() + ". Check logs for details.");
         }
     }
 

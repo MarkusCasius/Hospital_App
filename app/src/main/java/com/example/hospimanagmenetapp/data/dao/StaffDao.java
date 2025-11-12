@@ -23,4 +23,7 @@ public interface StaffDao {
 
     @Query("SELECT * FROM staff WHERE email = :email LIMIT 1") // Look up a single staff member by email
     Staff findByEmail(String email);       // Returns null if not found (handle in caller)
+
+    @Query("SELECT * FROM staff WHERE role = 'CLINICIAN' ORDER BY fullName ASC")
+    List<Staff> getClinicians();
 }

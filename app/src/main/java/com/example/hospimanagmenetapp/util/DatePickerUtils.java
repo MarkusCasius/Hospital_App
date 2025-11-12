@@ -15,25 +15,18 @@ public class DatePickerUtils {
 
     private DatePickerUtils() {}
 
-    public static void showDatePickerDialog(Context context, final EditText targetEditText, final Calendar initialDate) {
-        // Create a listener that will be called when the user sets a date.
+    public static void showDatePickerDialog(Context context, final Calendar calendar, final Runnable onDateSetAction) {
         DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
-            // Update the calendar instance with the date chosen by the user.
-            initialDate.set(Calendar.YEAR, year);
-            initialDate.set(Calendar.MONTH, month);
-            initialDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-            // Create a formatter and set the EditText's text.
-            SimpleDateFormat sdf = new SimpleDateFormat(APP_DATE_FORMAT, Locale.UK);
-            targetEditText.setText(sdf.format(initialDate.getTime()));
+            calendar.set(Calendar.YEAR, year);
+            calendar.set(Calendar.MONTH, month);
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            onDateSetAction.run(); // Execute the callback
         };
 
-        // Create and show the DatePickerDialog.
-        // It will be pre-filled with the date from the initialDate Calendar object.
         new DatePickerDialog(context, dateSetListener,
-                initialDate.get(Calendar.YEAR),
-                initialDate.get(Calendar.MONTH),
-                initialDate.get(Calendar.DAY_OF_MONTH))
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH))
                 .show();
     }
 }

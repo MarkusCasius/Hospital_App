@@ -1,52 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <LinearLayout
-        android:orientation="vertical"
-        android:padding="16dp"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Book / Edit Appointment"
+        android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Spinner for Clinic Selection -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clinic"
+        android:label="@id/spinnerClinicBooking"/>
+    <Spinner
+        android:id="@+id/spinnerClinicBooking"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"/>
 
-        <TextView
-            android:id="@+id/tvClinician"
-            android:textStyle="bold"
-            android:text="Clinician:"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+    <!-- Spinner for Clinician Selection -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clinician"
+        android:labelFor="@id/spinnerClinicianBooking"/>
+    <Spinner
+        android:id="@+id/spinnerClinicianBooking"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"/>
 
-        <EditText
-            android:id="@+id/etNhsBooking"
-            android:hint="NHS Number"
-            android:inputType="number"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+    <!-- Patient NHS Number -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Patient NHS Number"
+        android:labelFor="@id/etNhsBooking"/>
+    <EditText
+        android:id="@+id/etNhsBooking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter patient's NHS number"
+        android:inputType="text"/>
 
-        <EditText
-            android:id="@+id/etStartMillis"
-            android:hint="Start date"
-            android:inputType="none"
-            android:focusable="false"
-            android:clickable="true"
-            android:longClickable="false"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+    <!-- Start Time -->
+    <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Appointment Start"
+    android:layout_marginTop="16dp"/>
 
-        <EditText
-            android:id="@+id/etEndMillis"
-            android:hint="End date"
-            android:inputType="none"
-            android:focusable="false"
-            android:clickable="true"
-            android:longClickable="false"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+    <EditText
+        android:id="@+id/etStartMillis"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Select date and time"
+        android:focusable="false"
+        android:clickable="true" />
 
-        <Button
-            android:id="@+id/btnConfirmBooking"
-            android:text="Confirm"
-            android:layout_marginTop="12dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-</ScrollView>
+    <!-- End Time -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Appointment End"
+        android:layout_marginTop="16dp"/>
+
+    <EditText
+        android:id="@+id/etEndMillis"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Select date and time"
+        android:focusable="false"
+        android:clickable="true" />
+
+    <Button
+        android:id="@+id/btnConfirmBooking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Confirm Booking"
+        android:layout_marginTop="24dp"/>
+
+</LinearLayout>

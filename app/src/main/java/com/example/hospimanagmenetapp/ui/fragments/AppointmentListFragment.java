@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.*;
 
 import com.example.hospimanagmenetapp.R;
+import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.domain.GetTodaysAppointmentsUseCase;
 import com.example.hospimanagmenetapp.ui.adapters.AppointmentAdapter;
@@ -38,17 +39,15 @@ public class AppointmentListFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         ArrayAdapter<String> clinics = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"All Clinics","Surgery A","Surgery B"});
+                new String[]{"All Clinics", "North Clinic", "South Clinic"});
         spClinic.setAdapter(clinics);
 
         v.findViewById(R.id.btnRefresh).setOnClickListener(b -> loadData());
 
         fabBookAppointment.setOnClickListener(view -> {
-            // Create a new, empty appointment object to pass to the BookingFragment
-            // This signifies that we are creating a new booking, not editing an existing one
+            // Creates a new, empty appointment object to pass to the BookingFragment
             Appointment newAppointment = new Appointment();
 
-            // You can pre-fill some defaults if you like, e.g., a default clinician or time
             Calendar cal = Calendar.getInstance();
             newAppointment.startTime = cal.getTimeInMillis();
             cal.add(Calendar.HOUR, 1);
@@ -61,7 +60,7 @@ public class AppointmentListFragment extends Fragment {
 
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.appointmentContainer, f)
-                    .addToBackStack(null) // Allows user to press back to return to the list
+                    .addToBackStack(null)
                     .commit();
         });
 
@@ -75,7 +74,17 @@ public class AppointmentListFragment extends Fragment {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                List<Appointment> list = new GetTodaysAppointmentsUseCase(requireContext()).execute(clinic);
+                // Fetchs appointments directly from the DAO.
+                AppDatabase db = AppDatabase.getInstance(requireContext());
+                List<Appointment> list;
+                if (clinic == null) {
+                    // If "All Clinics" is selected, get all appointments.
+                    list = db.appointmentDao().getAllAppointments();
+                } else {
+                    // Otherwise, get appointments filtered by the selected clinic.
+                    list = db.appointmentDao().getAppointmentsByClinic(clinic);
+                }
+
                 requireActivity().runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
                     rv.setAdapter(new AppointmentAdapter(list, item -> {

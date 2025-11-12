@@ -28,4 +28,10 @@ public interface AppointmentDao {
 
     @Query("SELECT * FROM appointments WHERE patientNhsNumber = :nhsNumber ORDER BY startTime DESC")
     List<Appointment> getAppointmentsForPatient(String nhsNumber);
+
+    @Query("SELECT * FROM appointments ORDER BY startTime DESC")
+    List<Appointment> getAllAppointments();
+
+    @Query("SELECT * FROM appointments WHERE clinic = :clinic ORDER BY startTime DESC")
+    List<Appointment> getAppointmentsByClinic(String clinic);
 }

@@ -16,7 +16,9 @@ import com.example.hospimanagmenetapp.util.DatePickerUtils;
 import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.example.hospimanagmenetapp.util.ValidationUtils; // NHS number validator
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.Executors; // For running DB work off the main thread
 
 public class PatientRegistrationActivity extends AppCompatActivity { // Screen to capture and save a patient
@@ -37,7 +39,10 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
         etPhone = findViewById(R.id.etPhone);
         etEmail = findViewById(R.id.etEmail);
         btnSave = findViewById(R.id.btnSavePatient);
-        etDob.setOnClickListener(v -> DatePickerUtils.showDatePickerDialog(this, etDob, dobCalendar));
+        etDob.setOnClickListener(v -> DatePickerUtils.showDatePickerDialog(this, dobCalendar, () -> {
+            SimpleDateFormat sdf = new SimpleDateFormat(DatePickerUtils.APP_DATE_FORMAT, Locale.UK);
+            etDob.setText(sdf.format(dobCalendar.getTime()));
+        }));
 
         btnSave.setOnClickListener(v -> savePatient()); // When tapped, validate and persist the patient
     }
