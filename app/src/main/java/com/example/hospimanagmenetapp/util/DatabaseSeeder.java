@@ -2,7 +2,6 @@ package com.example.hospimanagmenetapp.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.example.hospimanagmenetapp.data.AppDatabase;
@@ -13,7 +12,7 @@ import com.example.hospimanagmenetapp.data.entities.Staff;
 import java.util.concurrent.Executors;
 
 
-public class AppointmentSeeder {
+public class DatabaseSeeder {
 
     private static final String PREFS_NAME = "SeederPrefs";
     private static final String KEY_SEEDED = "databaseSeeded";

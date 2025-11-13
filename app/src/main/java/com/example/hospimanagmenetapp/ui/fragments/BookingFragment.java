@@ -242,7 +242,8 @@ public class BookingFragment extends Fragment {
                 // Conflict detection
                 boolean conflict = new DetectScheduleConflictsUseCase(requireContext()).hasConflict(clinicianId, start, end);
                 if (conflict) {
-                    Toast.makeText(getContext(), "Time conflict detected. Choose another slot.", Toast.LENGTH_LONG).show();
+                    requireActivity().runOnUiThread(() ->
+                    Toast.makeText(getContext(), "Time conflict detected. Choose another slot.", Toast.LENGTH_LONG).show());
                     return;
                 }
 
