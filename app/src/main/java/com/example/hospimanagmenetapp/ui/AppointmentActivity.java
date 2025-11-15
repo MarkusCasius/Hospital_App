@@ -29,12 +29,6 @@ public class AppointmentActivity extends AppCompatActivity {
             return;
         }
 
-//        if (!RbacPolicyEvaluator.canViewAppointments(this)) {
-//            Toast.makeText(this, "Access denied. Please sign in with a permitted role.", Toast.LENGTH_LONG).show();
-//            finish();
-//            return;
-//        }
-
         new BiometricLoginCoordinator().authenticate(this, new BiometricLoginCoordinator.Callback() {
             @Override
             public void onSuccess() {

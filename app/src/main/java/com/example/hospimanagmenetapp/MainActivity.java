@@ -7,6 +7,7 @@ import android.os.Bundle;       // Holds saved instance state for lifecycle
 import android.widget.Button;   // UI widget: Button
 import android.widget.TextView; // UI widget: TextView
 
+import com.example.hospimanagmenetapp.feature.ehr.ui.PatientSummaryActivity;
 import com.example.hospimanagmenetapp.ui.PatientLoginActivity;
 import com.example.hospimanagmenetapp.ui.AdminLoginActivity;        // Screen for admin sign-in
 import com.example.hospimanagmenetapp.ui.PatientRegistrationActivity; // Screen to register patients
@@ -15,7 +16,7 @@ import com.example.hospimanagmenetapp.util.SessionManager;          // Helper fo
 public class MainActivity extends AppCompatActivity { // Entry Activity shown at app launch
 
     private TextView tvWelcome;       // Header showing session state
-    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments, btnPatientLogin; // Main menu buttons
+    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments, btnPatientLogin, btnPatientRecords; // Main menu buttons
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Lifecycle: called when Activity is created
@@ -29,8 +30,13 @@ public class MainActivity extends AppCompatActivity { // Entry Activity shown at
         btnAdminPortal = findViewById(R.id.btnAdminPortal);
         btnLogout = findViewById(R.id.btnLogout);
         btnAppointments = findViewById(R.id.btnAppointments);
+        btnPatientRecords = findViewById(R.id.btnPatientRecords);
 
         refreshHeader(); // Show current sign-in state immediately
+        // Navigate to EHR/Patient Records
+        btnPatientRecords.setOnClickListener(v ->
+                startActivity(new Intent(this, PatientSummaryActivity.class)));
+
         // Navigate to patient login
         btnPatientLogin.setOnClickListener(v ->
                 startActivity(new Intent(this, PatientLoginActivity.class)));

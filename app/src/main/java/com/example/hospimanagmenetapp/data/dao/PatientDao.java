@@ -7,6 +7,8 @@ import androidx.room.Query;              // Annotation for custom SQL queries
 
 import com.example.hospimanagmenetapp.data.entities.Patient; // Entity this DAO operates on
 
+import java.util.List;
+
 @Dao // Tells Room to generate the implementation at compile time
 public interface PatientDao {
 
@@ -18,4 +20,7 @@ public interface PatientDao {
 
     @Query("SELECT * FROM patients WHERE nhsNumber = :nhsNumber")
     Patient findByNhs(String nhsNumber);
+
+    @Query("SELECT * FROM patients")
+    List<Patient> getAll();
 }

@@ -8,6 +8,7 @@ import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.entities.Staff;
+import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
 
 import java.util.concurrent.Executors;
 
@@ -37,6 +38,8 @@ public class DatabaseSeeder {
                 seedPatients(context, db);
 
                 seedAppointments(db);
+
+                seedClinicalRecords(db);
 
                 prefs.edit().putBoolean(KEY_SEEDED, true).apply();
                 Log.i(TAG, "Database successfully seeded.");
@@ -149,5 +152,38 @@ public class DatabaseSeeder {
         apt3.status = "CANCELLED";
         db.appointmentDao().insert(apt3);
         Log.d(TAG, "Appointment seeding complete.");
+    }
+
+    private static void seedClinicalRecords(AppDatabase db) {
+        Log.d(TAG, "Seeding clinical records...");
+
+        // Clinical Record for John Doe
+        ClinicalRecord record1 = new ClinicalRecord();
+        record1.patientNhs = "1234567890";
+        record1.allergies = "Pollen, Dust Mites";
+        record1.problems = "Asthma (Mild), Seasonal Allergies";
+        record1.medications = "Albuterol Inhaler (as needed)";
+        record1.updatedAt = System.currentTimeMillis();
+        db.clinicalRecordDao().upsert(record1);
+
+        // Clinical Record for Patient 2
+        ClinicalRecord record2 = new ClinicalRecord();
+        record2.patientNhs = "9876543210";
+        record2.allergies = "Penicillin";
+        record2.problems = "Hypertension";
+        record2.medications = "Lisinopril 10mg";
+        record2.updatedAt = System.currentTimeMillis();
+        db.clinicalRecordDao().upsert(record2);
+
+        // Clinical Record for Patient 3
+        ClinicalRecord record3 = new ClinicalRecord();
+        record3.patientNhs = "9876543211";
+        record3.allergies = "None Known";
+        record3.problems = "None Known";
+        record3.medications = "None";
+        record3.updatedAt = System.currentTimeMillis();
+        db.clinicalRecordDao().upsert(record3);
+
+        Log.d(TAG, "Clinical record seeding complete.");
     }
 }

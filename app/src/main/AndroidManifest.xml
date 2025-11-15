@@ -54,5 +54,20 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />"
 
+        <!-- Lab 3 screens -->
+
+        <activity android:name=".feature.ehr.ui.PatientSummaryActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />"
+
+        <activity android:name=".feature.ehr.ui.BarcodeScannerActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity android:name=".feature.ehr.ui.VitalsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />"
+
+
     </application>
 </manifest>
