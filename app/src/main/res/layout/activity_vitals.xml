@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvVitalsHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Record Vitals for Patient"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etTemperature"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Temperature (°C)"
+        android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/etHeartRate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Heart Rate (bpm)"
+        android:inputType="number" />
+
+    <EditText
+        android:id="@+id/etSystolic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Systolic Pressure (mmHg)"
+        android:inputType="number" />
+
+    <EditText
+        android:id="@+id/etDiastolic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Diastolic Pressure (mmHg)"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/btnSaveVitals"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="24dp"
+        android:text="Save Vitals" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Previous Vitals" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvVitalsHistory"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:listitem="@layout/vitals_list_item" />
+
+    <!-- This LinearLayout holds the new page info TextView and buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/btnPreviousPage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Previous"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_marginEnd="16dp"/>
+
+        <!-- ADD THIS TEXTVIEW -->
+        <TextView
+            android:id="@+id/tvPageInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            tools:text="Page 1 of 10" />
+
+        <Button
+            android:id="@+id/btnNextPage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Next"
+            style="?attr/materialButtonOutlinedStyle"/>
+
+    </LinearLayout>
+
+</LinearLayout>

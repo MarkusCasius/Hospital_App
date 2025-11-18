@@ -96,6 +96,7 @@ public class AdminLoginActivity extends AppCompatActivity { // Screen for admin 
                             if(pin.equals(decryptedPin)) {
                                 matchedStaff = staff; // Found our user!
                                 matchedStaff.email = decryptedEmail; // Store the plaintext email for the session
+                                isAdmin = true;
                                 break; // Exit the loop
                             }
                         }
@@ -111,7 +112,7 @@ public class AdminLoginActivity extends AppCompatActivity { // Screen for admin 
                 // Check if we found a matching admin.
                 if (matchedStaff == null) {
                     runOnUiThread(() -> Toast.makeText(this, "Invalid admin credentials.", Toast.LENGTH_SHORT).show()); // Show error on UI thread
-                } else if (isAdmin == true) {
+                } else if (isAdmin) {
                     // Persist session details and proceed into the Admin Portal
                     final Staff finalAdmin = matchedStaff;
                     runOnUiThread(() -> {

@@ -2,6 +2,7 @@ package com.example.hospimanagmenetapp.network;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -31,14 +32,24 @@ public class MockInterceptor implements Interceptor {
 
         try {
             if (path.endsWith("/appointments/today")) {
-                json = readAsset("mock/appointments_today.json");
-                return new Response.Builder()
-                        .code(200)
-                        .message("OK")
-                        .request(req)
-                        .protocol(Protocol.HTTP_1_1)
-                        .body(ResponseBody.create(json, MediaType.get("application/json")))
-                        .build();
+                try {
+                    json = readAsset("mock/appointments_today.json");
+                    return new Response.Builder()
+                            .code(200)
+                            .message("OK")
+                            .request(req)
+                            .protocol(Protocol.HTTP_1_1)
+                            .body(ResponseBody.create(json, MediaType.get("application/json")))
+                            .build();
+                } catch (Exception e) {
+                    return new Response.Builder()
+                            .code(400)
+                            .message("Bad Request: Missing json")
+                            .request(req)
+                            .protocol(Protocol.HTTP_1_1)
+                            .body(ResponseBody.create("{\"error\":\"Missing json\"}", MediaType.get("ehr/json")))
+                            .build();
+                }
 
             } else if (path.endsWith("/appointments/bookOrReschedule")) {
                 // Echo back the request body as the response body.
@@ -56,6 +67,49 @@ public class MockInterceptor implements Interceptor {
                         .body(ResponseBody.create(requestBody, MediaType.get("application/json")))
                         .build();
 
+            } else if (path.endsWith("/ehr/record")) {
+                try {
+                    json = readAsset("mock/ehr_record.json");
+
+                     return new Response.Builder()
+                        .code(200)
+                        .message("OK")
+                        .request(req)
+                        .protocol(Protocol.HTTP_1_1)
+                        .body(ResponseBody.create(json, MediaType.get("ehr/json")))
+                        .build();
+                } catch (Exception e) {
+                    return new Response.Builder()
+                            .code(400)
+                            .message("Bad Request: Missing json")
+                            .request(req)
+                            .protocol(Protocol.HTTP_1_1)
+                            .body(ResponseBody.create("{\"error\":\"Missing json\"}", MediaType.get("ehr/json")))
+                            .build();
+                }
+            } else if (path.endsWith("/ehr/updateOrCreate")) {
+                final Buffer buffer = new Buffer();
+                req.body().writeTo(buffer);
+                String requestBody = buffer.readUtf8();
+
+                Log.d(TAG, "Echoing request body for /updateOrCreate");
+
+                return new Response.Builder()
+                        .code(200) // Success
+                        .message("OK (Echoed)")
+                        .request(req)
+                        .protocol(Protocol.HTTP_1_1)
+                        .body(ResponseBody.create(requestBody, MediaType.get("ehr/json")))
+                        .build();
+            } else if (path.endsWith("/ehr/vitals")) {
+                Log.d(TAG, "Mock uploading vitals.");
+                return new Response.Builder()
+                        .code(200)
+                        .message("OK")
+                        .request(req)
+                        .protocol(Protocol.HTTP_1_1)
+                        .body(ResponseBody.create("", null))
+                        .build();
             } else {
                 // If the path is unknown, return a 404 Not Found error
                 return new Response.Builder()
@@ -88,4 +142,3 @@ public class MockInterceptor implements Interceptor {
         return sb.toString();
     }
 }
-

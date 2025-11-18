@@ -8,28 +8,29 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.hospimanagmenetapp.R;
-import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
 import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.repo.EhrRepository;
 import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
 
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class PatientSummaryActivity extends AppCompatActivity {
 
     private EhrRepository ehrRepository;
     private Spinner spPatients;
-    private TextView tvHeader, tvProblems, tvAllergies, tvMedications;
-    private Button btnVitals;
+    private TextView tvHeader;
+    private EditText etProblems, etAllergies, etMedications;
+    private Button btnVitals, btnSave;
     private List<Patient> patientList;
+    private ClinicalRecord currentRecord;
 
 
     @Override
@@ -46,10 +47,11 @@ public class PatientSummaryActivity extends AppCompatActivity {
         ehrRepository = new EhrRepository(this);
         spPatients = findViewById(R.id.spPatients);
         tvHeader = findViewById(R.id.tvPatientHeader);
-        tvProblems = findViewById(R.id.tvProblems);
-        tvAllergies = findViewById(R.id.tvAllergies);
-        tvMedications = findViewById(R.id.tvMedications);
+        etProblems = findViewById(R.id.etProblems);
+        etAllergies = findViewById(R.id.etAllergies);
+        etMedications = findViewById(R.id.etMedications);
         btnVitals = findViewById(R.id.btnRecordVitals);
+        btnSave = findViewById(R.id.btnSave);
 
         loadAllPatients();
 
@@ -76,28 +78,14 @@ public class PatientSummaryActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please select a patient first.", Toast.LENGTH_SHORT).show();
             }
         });
-//        String nhs = getIntent().getStringExtra("nhsNumber");
-//        tvHeader.setText("Patient NHS: " + nhs);
-//
-//        Executors.newSingleThreadExecutor().execute(() -> {
-//            ClinicalRecord record = AppDatabase.getInstance(getApplicationContext())
-//                    .clinicalRecordDao().findByPatient(nhs);
-//            runOnUiThread(() -> {
-//                if (record != null) {
-//                    tvProblems.setText("Problems: " + record.problems);
-//                    tvAllergies.setText("Allergies: " + record.allergies);
-//                    tvMedications.setText("Medications: " + record.medications);
-//                } else {
-//                    tvProblems.setText("No clinical record found.");
-//                }
-//            });
-//        });
-//
-//        btnVitals.setOnClickListener(v -> {
-//            Intent i = new Intent(this, VitalsActivity.class);
-//            i.putExtra("nhsNumber", nhs);
-//            startActivity(i);
-//        });
+
+        btnSave.setOnClickListener(v -> {
+            if (!RbacPolicyEvaluator.canEditEhr(this)) {
+                Toast.makeText(this, "Access Denied. You do not have permission to edit records.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            saveClinicalRecord();
+        });
     }
     private void loadAllPatients() {
         ehrRepository.getAllDecryptedPatients(patients -> {
@@ -112,7 +100,7 @@ public class PatientSummaryActivity extends AppCompatActivity {
 
             spPatients.setAdapter(adapter);
 
-            // If an NHS number was passed from another activity, pre-select that patient
+            // If an NHS number was passed from another activity, like barcode scanner, pre-select that patient
             String initialNhs = getIntent().getStringExtra("nhsNumber");
             if (initialNhs != null) {
                 for (int i = 0; i < patients.size(); i++) {
@@ -128,23 +116,46 @@ public class PatientSummaryActivity extends AppCompatActivity {
     private void loadClinicalRecord(String nhsNumber) {
         tvHeader.setText("Patient NHS: " + nhsNumber);
         ehrRepository.getClinicalRecord(nhsNumber, record -> {
+            this.currentRecord = record;
             if (record != null) {
-                tvProblems.setText("Problems: " + (record.problems != null ? record.problems : "N/A"));
-                tvAllergies.setText("Allergies: " + (record.allergies != null ? record.allergies : "N/A"));
-                tvMedications.setText("Medications: " + (record.medications != null ? record.medications : "N/A"));
+                etProblems.setText(record.problems != null ? record.problems : "");
+                etAllergies.setText(record.allergies != null ? record.allergies : "");
+                etMedications.setText(record.medications != null ? record.medications : "");
             } else {
                 clearClinicalData();
-                tvProblems.setText("No clinical record found for this patient.");
+                Toast.makeText(this, "No clinical record found for this patient.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void saveClinicalRecord() {
+        if (currentRecord == null) {
+            Toast.makeText(this, "No record loaded to save.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        currentRecord.problems = etProblems.getText().toString();
+        currentRecord.allergies = etAllergies.getText().toString();
+        currentRecord.medications = etMedications.getText().toString();
+
+        ehrRepository.updateClinicalRecord(currentRecord, updatedRecord -> {
+            if (updatedRecord != null) {
+                Toast.makeText(this, "Clinical record updated successfully.", Toast.LENGTH_SHORT).show();
+                // Optionally reload the data to confirm it's saved
+                loadClinicalRecord(updatedRecord.enPatientNhs);
+            } else {
+                Toast.makeText(this, "Failed to update clinical record.", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void clearClinicalData() {
-        tvProblems.setText("Problems: ");
-        tvAllergies.setText("Allergies: ");
-        tvMedications.setText("Medications: ");
+        this.currentRecord = null;
+        tvHeader.setText("Patient Details");
+        etProblems.setText("");
+        etAllergies.setText("");
+        etMedications.setText("");
     }
 
 
 }
-

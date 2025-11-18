@@ -4,14 +4,15 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 
 import com.example.hospimanagmenetapp.R;
-import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.domain.GetTodaysAppointmentsUseCase;
 import com.example.hospimanagmenetapp.ui.adapters.AppointmentAdapter;
@@ -25,7 +26,7 @@ public class AppointmentListFragment extends Fragment {
 
     private Spinner spClinic;
     private ProgressBar progress;
-    private androidx.recyclerview.widget.RecyclerView rv;
+    private RecyclerView rv;
     private FloatingActionButton fabBookAppointment;
 
     @Nullable
@@ -74,16 +75,8 @@ public class AppointmentListFragment extends Fragment {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                // Fetchs appointments directly from the DAO.
-                AppDatabase db = AppDatabase.getInstance(requireContext());
-                List<Appointment> list;
-                if (clinic == null) {
-                    // If "All Clinics" is selected, get all appointments.
-                    list = db.appointmentDao().getAllAppointments();
-                } else {
-                    // Otherwise, get appointments filtered by the selected clinic.
-                    list = db.appointmentDao().getAppointmentsByClinic(clinic);
-                }
+                GetTodaysAppointmentsUseCase useCase = new GetTodaysAppointmentsUseCase(requireContext());
+                List<Appointment> list = useCase.execute(clinic);
 
                 requireActivity().runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
@@ -96,6 +89,7 @@ public class AppointmentListFragment extends Fragment {
                     }));
                 });
             } catch (Exception e) {
+                Log.e("AppointmentListFragment", "Failed to load appointments", e);
                 requireActivity().runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Failed to load. Please retry.", Toast.LENGTH_LONG).show();

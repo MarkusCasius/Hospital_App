@@ -75,31 +75,28 @@ public class PatientAppointmentListFragment extends Fragment {
         rvPatientAppointments.setVisibility(View.GONE);
         tvNoAppointments.setVisibility(View.GONE);
 
-        Executors.newSingleThreadExecutor().execute(() -> {
-            AppDatabase db = AppDatabase.getInstance(requireContext());
-            // This assumes you have an AppointmentDao with this method.
-            // If not, you will need to create it.
-            List<Appointment> appointments = db.appointmentDao().getAppointmentsForPatient(patientNhsNumber);
+        try {
+            Executors.newSingleThreadExecutor().execute(() -> {
+                AppDatabase db = AppDatabase.getInstance(requireContext());
+                List<Appointment> appointments = db.appointmentDao().getAppointmentsForPatient(patientNhsNumber);
 
-            requireActivity().runOnUiThread(() -> {
-                patientProgress.setVisibility(View.GONE);
-                if (appointments == null || appointments.isEmpty()) {
-                    tvNoAppointments.setVisibility(View.VISIBLE);
-                } else {
-                    rvPatientAppointments.setVisibility(View.VISIBLE);
-                    // Re-use the existing AppointmentAdapter.
-                    rvPatientAppointments.setAdapter(new AppointmentAdapter(appointments, item -> {
-                        // For a patient, clicking an item should open a detail view.
-                        // We can re-use BookingFragment, but it should be read-only for patients.
-                        // The RBAC check inside BookingFragment will prevent them from making changes.
-                        BookingFragment bookingFragment = BookingFragment.newInstance(item);
-                        requireActivity().getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.appointmentContainer, bookingFragment)
-                                .addToBackStack(null) // Allows user to navigate back to their list
-                                .commit();
-                    }));
-                }
+                requireActivity().runOnUiThread(() -> {
+                    patientProgress.setVisibility(View.GONE);
+                    if (appointments == null || appointments.isEmpty()) {
+                        tvNoAppointments.setVisibility(View.VISIBLE);
+                    } else {
+                        rvPatientAppointments.setVisibility(View.VISIBLE);
+                        rvPatientAppointments.setAdapter(new AppointmentAdapter(appointments, item -> {
+                            BookingFragment bookingFragment = BookingFragment.newInstance(item);
+                            requireActivity().getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.appointmentContainer, bookingFragment)
+                                    .addToBackStack(null) // Allows user to navigate back to their list
+                                    .commit();
+                        }));
+                    }
+                });
             });
-        });
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Error loading appointments.", Toast.LENGTH_SHORT).show();}
     }
 }

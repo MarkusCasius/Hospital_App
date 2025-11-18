@@ -7,6 +7,7 @@ import android.os.Bundle;       // Holds saved instance state for lifecycle
 import android.widget.Button;   // UI widget: Button
 import android.widget.TextView; // UI widget: TextView
 
+import com.example.hospimanagmenetapp.feature.ehr.ui.BarcodeScannerActivity;
 import com.example.hospimanagmenetapp.feature.ehr.ui.PatientSummaryActivity;
 import com.example.hospimanagmenetapp.ui.PatientLoginActivity;
 import com.example.hospimanagmenetapp.ui.AdminLoginActivity;        // Screen for admin sign-in
@@ -35,7 +36,7 @@ public class MainActivity extends AppCompatActivity { // Entry Activity shown at
         refreshHeader(); // Show current sign-in state immediately
         // Navigate to EHR/Patient Records
         btnPatientRecords.setOnClickListener(v ->
-                startActivity(new Intent(this, PatientSummaryActivity.class)));
+                startActivity(new Intent(this, BarcodeScannerActivity.class)));
 
         // Navigate to patient login
         btnPatientLogin.setOnClickListener(v ->

@@ -11,6 +11,7 @@ import com.example.hospimanagmenetapp.network.dto.AppointmentDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import retrofit2.Response;
 
@@ -27,21 +28,29 @@ public class AppointmentRepository {
     }
 
     public List<Appointment> getTodaysAppointments(String clinic, long start, long end) throws Exception {
-        // fetch mock network first
-        Response<List<AppointmentDto>> resp = api.appointmentApi().getTodaysAppointments(clinic).execute();
-        List<Appointment> mapped = new ArrayList<>();
-        if (resp.isSuccessful() && resp.body() != null) {
-            for (AppointmentDto dto : resp.body()) {
-                Appointment a = map(dto);
-                mapped.add(a);
+        try {
+            // fetch mock network first
+            Response<List<AppointmentDto>> resp = api.appointmentApi().getTodaysAppointments(clinic).execute();
+            List<Appointment> mapped = new ArrayList<>();
+            if (resp.isSuccessful() && resp.body() != null) {
+                for (AppointmentDto dto : resp.body()) {
+                    Appointment a = map(dto);
+                    mapped.add(a);
+                }
             }
+            // cache to DB (simplified: insert if none today)
+            for (Appointment a : mapped) {
+                dao.insert(a);
+            }
+        } catch (Exception e) {}
+        Log.d(TAG, "Fetching today's appointments directly from the database.");
+        List<Appointment> appointments = dao.findBetween(start, end);
+        if (clinic == null) {
+            return appointments;
         }
-        // cache to DB (simplified: insert if none today)
-        for (Appointment a : mapped) {
-            dao.insert(a);
-        }
-        // return from DB (source of truth)
-        return dao.findBetween(start, end);
+        return appointments.stream()
+                .filter(a -> clinic.equals(a.clinic))
+                .collect(Collectors.toList());
     }
 
     public Appointment bookOrReschedule(Appointment appt) throws Exception {

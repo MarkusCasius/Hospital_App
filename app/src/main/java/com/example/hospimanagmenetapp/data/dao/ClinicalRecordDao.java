@@ -6,7 +6,7 @@ import java.util.List;
 
 @Dao
 public interface ClinicalRecordDao {
-    @Query("SELECT * FROM clinical_records WHERE patientNhs=:nhs LIMIT 1")
+    @Query("SELECT * FROM clinical_records WHERE enPatientNhs=:nhs LIMIT 1")
     ClinicalRecord findByPatient(String nhs);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

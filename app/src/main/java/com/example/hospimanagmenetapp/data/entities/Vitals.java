@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "vitals")
 public class Vitals {
     @PrimaryKey(autoGenerate = true) public long id;
-    public String patientNhs;
+    public String enPatientNhs; // Encrypted
     public float temperature;
     public int heartRate;
     public int systolic;

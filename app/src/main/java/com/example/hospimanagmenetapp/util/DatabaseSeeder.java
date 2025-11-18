@@ -12,6 +12,7 @@ import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
 
 import java.util.concurrent.Executors;
 
+// For testing. The seeder loads static data into the database the first time the app is initialised for testing.
 
 public class DatabaseSeeder {
 
@@ -159,7 +160,7 @@ public class DatabaseSeeder {
 
         // Clinical Record for John Doe
         ClinicalRecord record1 = new ClinicalRecord();
-        record1.patientNhs = "1234567890";
+        record1.enPatientNhs = "1234567890";
         record1.allergies = "Pollen, Dust Mites";
         record1.problems = "Asthma (Mild), Seasonal Allergies";
         record1.medications = "Albuterol Inhaler (as needed)";
@@ -168,7 +169,7 @@ public class DatabaseSeeder {
 
         // Clinical Record for Patient 2
         ClinicalRecord record2 = new ClinicalRecord();
-        record2.patientNhs = "9876543210";
+        record2.enPatientNhs = "9876543210";
         record2.allergies = "Penicillin";
         record2.problems = "Hypertension";
         record2.medications = "Lisinopril 10mg";
@@ -177,7 +178,7 @@ public class DatabaseSeeder {
 
         // Clinical Record for Patient 3
         ClinicalRecord record3 = new ClinicalRecord();
-        record3.patientNhs = "9876543211";
+        record3.enPatientNhs = "9876543211";
         record3.allergies = "None Known";
         record3.problems = "None Known";
         record3.medications = "None";

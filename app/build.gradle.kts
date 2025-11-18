@@ -68,6 +68,7 @@ dependencies { // Libraries this module depends on
     // --- Lab 3 ---
     // Paging
     implementation("androidx.paging:paging-runtime:3.3.2")
+    implementation("androidx.room:room-paging")
     // WorkManager (offline queue)
     implementation("androidx.work:work-runtime:2.9.1")
     // Barcode scanning (ZXing)
