@@ -32,6 +32,7 @@ public class MockInterceptor implements Interceptor {
 
         try {
             if (path.endsWith("/appointments/today")) {
+                Log.d(TAG, "Mock returning today's appointments.");
                 try {
                     json = readAsset("mock/appointments_today.json");
                     return new Response.Builder()
@@ -42,6 +43,7 @@ public class MockInterceptor implements Interceptor {
                             .body(ResponseBody.create(json, MediaType.get("application/json")))
                             .build();
                 } catch (Exception e) {
+                    Log.e(TAG, "Failed to read mock data", e);
                     return new Response.Builder()
                             .code(400)
                             .message("Bad Request: Missing json")

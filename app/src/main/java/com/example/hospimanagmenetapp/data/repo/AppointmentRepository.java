@@ -44,8 +44,11 @@ public class AppointmentRepository {
             }
         } catch (Exception e) {}
         Log.d(TAG, "Fetching today's appointments directly from the database.");
-        List<Appointment> appointments = dao.findBetween(start, end);
+        // List<Appointment> appointments = dao.findBetween(start, end);
+        List<Appointment> appointments = dao.getAllAppointments();
+        Log.d(TAG, "Appointments: " + appointments);
         if (clinic == null) {
+            Log.d(TAG, "No clinic specified. Returning all appointments.");
             return appointments;
         }
         return appointments.stream()
