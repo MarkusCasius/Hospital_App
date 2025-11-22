@@ -15,10 +15,10 @@ public interface PatientDao {
     @Insert(onConflict = OnConflictStrategy.ABORT) // Insert a Patient; fail if a constraint (e.g., unique NHS) is violated
     long insert(Patient patient);   // Returns the new row ID (or -1 if ignored, depending on strategy)
 
-    @Query("SELECT COUNT(*) FROM patients WHERE nhsNumber = :nhsNumber") // Parameterised SQL; :nhsNumber is bound from the method arg
+    @Query("SELECT COUNT(*) FROM patients WHERE enPatientNhsNumber = :nhsNumber") // Parameterised SQL; :nhsNumber is bound from the method arg
     int countByNhs(String nhsNumber);   // Quick existence check (0 = none, >0 = exists)
 
-    @Query("SELECT * FROM patients WHERE nhsNumber = :nhsNumber")
+    @Query("SELECT * FROM patients WHERE enPatientNhsNumber = :nhsNumber")
     Patient findByNhs(String nhsNumber);
 
     @Query("SELECT * FROM patients")

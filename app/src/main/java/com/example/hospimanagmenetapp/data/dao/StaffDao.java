@@ -1,6 +1,7 @@
 package com.example.hospimanagmenetapp.data.dao; // DAO (Data Access Object) package for Room
 
 import androidx.room.Dao;                 // Marks this interface as a Room DAO
+import androidx.room.Delete;
 import androidx.room.Insert;             // Annotation for insert operations
 import androidx.room.OnConflictStrategy; // Policy for handling conflicts (e.g., unique constraints)
 import androidx.room.Query;              // Annotation for custom SQL queries
@@ -26,4 +27,7 @@ public interface StaffDao {
 
     @Query("SELECT * FROM staff WHERE role = 'CLINICIAN' ORDER BY fullName ASC")
     List<Staff> getClinicians();
+
+    @Delete
+    void delete(Staff staff); // Deletes a staff member based on the provided entity (usually by primary key)
 }

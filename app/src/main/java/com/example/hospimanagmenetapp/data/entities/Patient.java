@@ -7,14 +7,14 @@ import androidx.room.PrimaryKey;     // Identifies the primary key column
 
 @Entity(
         tableName = "patients",                                  // Actual SQLite table name
-        indices = {@Index(value = {"nhsNumber"}, unique = true)} // Unique index so each NHS number appears only once
+        indices = {@Index(value = {"enPatientNhsNumber"}, unique = true)} // Unique index so each NHS number appears only once
 )
 public class Patient {
     @PrimaryKey(autoGenerate = true) // Auto-incremented surrogate key
     public long id;                  // Local DB identifier
 
     @NonNull                // Must not be null; Room will enforce at runtime
-    public String nhsNumber; // NHS number (store digits only; format/validate in code)
+    public String enPatientNhsNumber; // NHS number (store digits only; format/validate in code) - Encrypted
 
     public String fullName;        // Patient’s full name (consider @NonNull if mandatory)
     public String dateOfBirth;     // ISO yyyy-MM-dd for simplicity; a TypeConverter to Date is cleaner

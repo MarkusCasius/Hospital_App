@@ -22,11 +22,12 @@ public class AppointmentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_appointment);
 
-        String userRole = SessionManager.getCurrentRole(this);
+        boolean bypassRbac = getIntent().getBooleanExtra("bypassRbacCheck", false);
 
-        if (!RbacPolicyEvaluator.canBookOrReschedule(this)) {
+        if (!bypassRbac && !RbacPolicyEvaluator.canBookOrReschedule(this)) {
             Toast.makeText(this, "Access denied. Not permitted to make booking", Toast.LENGTH_LONG).show();
             finish();
+            return; // Return here to prevent the rest of the code from running
         }
 
         new BiometricLoginCoordinator().authenticate(this, new BiometricLoginCoordinator.Callback() {

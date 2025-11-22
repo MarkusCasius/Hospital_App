@@ -13,6 +13,10 @@ android { // Android-specific build configuration for the app module
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" // Runner for instrumented (device) tests
         vectorDrawables.useSupportLibrary = true
     }
+    testOptions {
+        animationsDisabled = true
+    }
+
 
     buildTypes { // Definitions of build variants like debug/release
         release { // Settings for the release (shipping) build
@@ -44,7 +48,8 @@ dependencies { // Libraries this module depends on
     implementation("androidx.recyclerview:recyclerview:1.3.2") // RecyclerView for efficient scrolling lists/grids
 
     // Room (Java -> annotationProcessor)
-    implementation("androidx.room:room-runtime:2.6.1") // Room runtime for SQLite ORM
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation(libs.espresso.contrib) // Room runtime for SQLite ORM
     annotationProcessor("androidx.room:room-compiler:2.6.1") // Annotation processor generating Room DAOs/entities
 
     // Lifecycle (already had runtime + livedata) + ViewModel for Lab 2
@@ -70,6 +75,7 @@ dependencies { // Libraries this module depends on
     implementation("androidx.paging:paging-runtime:3.3.2")
     implementation("androidx.room:room-paging")
     // WorkManager (offline queue)
+    implementation("com.google.guava:guava:33.2.1-android")
     implementation("androidx.work:work-runtime:2.9.1")
     // Barcode scanning (ZXing)
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
@@ -81,5 +87,12 @@ dependencies { // Libraries this module depends on
     testImplementation(libs.junit) // JUnit 4 for local unit tests
     androidTestImplementation(libs.ext.junit) // AndroidX JUnit extensions for instrumented tests
     androidTestImplementation(libs.espresso.core) // Espresso UI testing framework
+
+    // For testing Room
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
+
+    // For Activity testing
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
 
 }

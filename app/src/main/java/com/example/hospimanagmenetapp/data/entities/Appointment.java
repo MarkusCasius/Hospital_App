@@ -10,11 +10,11 @@ public class Appointment {
     @PrimaryKey(autoGenerate = true)
     public long id;
 
-    public String patientNhsNumber; // link by NHS number (Lab 2 simple)
+    public String enPatientNhsNumber; // link by NHS number (Lab 2 simple) - Encrypted
     public long startTime;           // epoch millis
     public long endTime;             // epoch millis
     public long clinicianId;         // mock doctor id
-    public String clinicianName;
+    public String enClinicianName;   // Encrypted
     public String clinic;            // location/clinic name
 
     public String status;            // BOOKED | CANCELLED | COMPLETED

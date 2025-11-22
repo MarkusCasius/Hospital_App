@@ -17,8 +17,11 @@ import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.dao.AppointmentDao;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
+import com.example.hospimanagmenetapp.data.entities.Staff;
 import com.example.hospimanagmenetapp.ui.adapters.AppointmentAdapter;
+import com.example.hospimanagmenetapp.util.EncryptionManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -75,18 +78,20 @@ public class PatientAppointmentListFragment extends Fragment {
         rvPatientAppointments.setVisibility(View.GONE);
         tvNoAppointments.setVisibility(View.GONE);
 
-        try {
-            Executors.newSingleThreadExecutor().execute(() -> {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
                 AppDatabase db = AppDatabase.getInstance(requireContext());
                 List<Appointment> appointments = db.appointmentDao().getAppointmentsForPatient(patientNhsNumber);
 
+                List<Appointment> decryptedList = EncryptionManager.decryptAppointments(appointments);
+
                 requireActivity().runOnUiThread(() -> {
                     patientProgress.setVisibility(View.GONE);
-                    if (appointments == null || appointments.isEmpty()) {
+                    if (decryptedList == null || decryptedList.isEmpty()) {
                         tvNoAppointments.setVisibility(View.VISIBLE);
                     } else {
                         rvPatientAppointments.setVisibility(View.VISIBLE);
-                        rvPatientAppointments.setAdapter(new AppointmentAdapter(appointments, item -> {
+                        rvPatientAppointments.setAdapter(new AppointmentAdapter(decryptedList, item -> {
                             BookingFragment bookingFragment = BookingFragment.newInstance(item);
                             requireActivity().getSupportFragmentManager().beginTransaction()
                                     .replace(R.id.appointmentContainer, bookingFragment)
@@ -95,8 +100,9 @@ public class PatientAppointmentListFragment extends Fragment {
                         }));
                     }
                 });
-            });
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "Error loading appointments.", Toast.LENGTH_SHORT).show();}
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Error loading appointments.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

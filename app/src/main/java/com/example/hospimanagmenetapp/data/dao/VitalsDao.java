@@ -16,9 +16,12 @@ public interface VitalsDao {
     @Query("UPDATE vitals SET synced=1 WHERE id=:id")
     void markSynced(long id);
 
-    @Query("SELECT COUNT(id) FROM vitals WHERE enPatientNhs = :nhsNumber")
+    @Query("SELECT COUNT(id) FROM vitals WHERE enPatientNhsNumber = :nhsNumber")
     int getVitalsCountForPatient(String nhsNumber);
 
-    @Query("SELECT * FROM vitals WHERE enPatientNhs = :nhsNumber ORDER BY timestamp DESC LIMIT :limit OFFSET :offset")
+    @Query("SELECT * FROM vitals WHERE enPatientNhsNumber = :nhsNumber ORDER BY timestamp DESC LIMIT :limit OFFSET :offset")
     List<Vitals> getVitalsForPatientPaged(String nhsNumber, int limit, int offset);
+
+    @Query("SELECT * FROM vitals ORDER BY timestamp DESC")
+    List<Vitals> getAllVitals();
 }

@@ -8,14 +8,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.paging.LoadState;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.entities.Vitals;
 import com.example.hospimanagmenetapp.data.repo.EhrRepository;
 import com.example.hospimanagmenetapp.feature.ehr.ui.adapters.VitalsAdapter;
+import com.example.hospimanagmenetapp.util.EncryptionManager;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -32,7 +31,7 @@ public class VitalsActivity extends AppCompatActivity {
     private TextView tvPageInfo;
 
     private int currentPage = 1;
-    private int pageSize = 5; // A default page size
+    private int pageSize = 5; // Default page size
     private int totalItemCount = 0;
 
     @Override
@@ -66,7 +65,7 @@ public class VitalsActivity extends AppCompatActivity {
 
         rvVitalsHistory = findViewById(R.id.rvVitalsHistory);
         rvVitalsHistory.setLayoutManager(new LinearLayoutManager(this));
-        vitalsAdapter = new VitalsAdapter(); // This is now a ListAdapter
+        vitalsAdapter = new VitalsAdapter(); // ListAdapter
         rvVitalsHistory.setAdapter(vitalsAdapter);
 
         btnPreviousPage = findViewById(R.id.btnPreviousPage);
@@ -83,12 +82,12 @@ public class VitalsActivity extends AppCompatActivity {
         });
     }
     private void loadPage() {
-        // Use AsyncTask for background database query
+        // Background database query
         Executors.newSingleThreadExecutor().execute(() -> {
-            // First, get the total count of vitals for the patient
-            totalItemCount = ehrRepository.getVitalsCountForPatient(patientNhsNumber);
+            List<Vitals> allPatientVitals = ehrRepository.getAllVitalsForPatient(patientNhsNumber);
 
             // Calculate total pages, ensuring at least 1 page
+            totalItemCount = allPatientVitals.size();
             int totalPages = (int) Math.ceil((double) totalItemCount / pageSize);
             if (totalPages == 0) totalPages = 1;
 
@@ -98,12 +97,21 @@ public class VitalsActivity extends AppCompatActivity {
 
             // Calculate the offset for the database query
             int offset = (currentPage - 1) * pageSize;
-            List<Vitals> vitalsForPage = ehrRepository.getVitalsForPatientPaged(patientNhsNumber, pageSize, offset);
+            int end = Math.min(offset + pageSize, totalItemCount);
+            List<Vitals> vitalsForPage = allPatientVitals.subList(offset, end);
+
+            List<Vitals> decrpytedVitlasForPage = null;
+            try {
+                decrpytedVitlasForPage = EncryptionManager.decryptVitals(vitalsForPage);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            List<Vitals> finalDecrpytedVitlasForPage = decrpytedVitlasForPage;
 
             // Update UI on the main thread
             int finalTotalPages = totalPages;
             runOnUiThread(() -> {
-                vitalsAdapter.submitList(vitalsForPage);
+                vitalsAdapter.submitList(finalDecrpytedVitlasForPage);
                 String pageInfo = "Page " + currentPage + " of " + finalTotalPages;
                 tvPageInfo.setText(pageInfo);
 
@@ -134,7 +142,7 @@ public class VitalsActivity extends AppCompatActivity {
     private void saveVitals() {
         try {
             Vitals vitals = new Vitals();
-            vitals.enPatientNhs = patientNhsNumber;
+            vitals.enPatientNhsNumber = patientNhsNumber;
             vitals.temperature = Float.parseFloat(etTemperature.getText().toString());
             vitals.heartRate = Integer.parseInt(etHeartRate.getText().toString());
             vitals.systolic = Integer.parseInt(etSystolic.getText().toString());
@@ -142,7 +150,10 @@ public class VitalsActivity extends AppCompatActivity {
             vitals.timestamp = System.currentTimeMillis();
             vitals.synced = false;
 
-            ehrRepository.saveVitals(vitals, success -> {
+            Vitals encryptedVitals = EncryptionManager.encryptVitals(vitals);
+
+
+            ehrRepository.saveVitals(encryptedVitals, success -> {
                 if (success) {
                     Toast.makeText(this, "Vitals saved locally.", Toast.LENGTH_SHORT).show();
                     clearInputFields();
@@ -154,6 +165,8 @@ public class VitalsActivity extends AppCompatActivity {
             });
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Please enter valid numbers for all fields.", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "An error occurred: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -16,6 +16,7 @@ import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.domain.GetTodaysAppointmentsUseCase;
 import com.example.hospimanagmenetapp.ui.adapters.AppointmentAdapter;
+import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.Calendar;
@@ -53,8 +54,8 @@ public class AppointmentListFragment extends Fragment {
             newAppointment.startTime = cal.getTimeInMillis();
             cal.add(Calendar.HOUR, 1);
             newAppointment.endTime = cal.getTimeInMillis();
-            newAppointment.clinicianId = 0; // Or a default ID
-            newAppointment.clinicianName = "Unassigned"; // Default name
+            newAppointment.clinicianId = 0; // Default clinician
+            newAppointment.enClinicianName = "Unassigned"; // Default name
             newAppointment.clinic = "North Clinic"; // Default clinic
 
             BookingFragment f = BookingFragment.newInstance(newAppointment);
@@ -77,10 +78,11 @@ public class AppointmentListFragment extends Fragment {
             try {
                 GetTodaysAppointmentsUseCase useCase = new GetTodaysAppointmentsUseCase(requireContext());
                 List<Appointment> list = useCase.execute(clinic);
+                List<Appointment> decryptedAppointments = EncryptionManager.decryptAppointments(list);
 
                 requireActivity().runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
-                    rv.setAdapter(new AppointmentAdapter(list, item -> {
+                    rv.setAdapter(new AppointmentAdapter(decryptedAppointments, item -> {
                         BookingFragment f = BookingFragment.newInstance(item);
                         requireActivity().getSupportFragmentManager().beginTransaction()
                                 .replace(R.id.appointmentContainer, f)

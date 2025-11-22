@@ -2,7 +2,6 @@ package com.example.hospimanagmenetapp.ui; // UI layer package for Activities
 
 import androidx.appcompat.app.AppCompatActivity; // Base class for Activities with AppCompat support
 
-import android.app.DatePickerDialog;
 import android.os.Bundle;        // Lifecycle state bundle
 import android.text.TextUtils;   // Utility for simple string emptiness checks
 import android.widget.Button;    // UI widget: Button
@@ -68,7 +67,7 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
             return; // Do not proceed with invalid identifiers
         }
 
-        // Run database I/O off the main thread to keep the UI responsive
+        // Run database
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 EncryptionManager encryptionManager = new EncryptionManager();
@@ -81,7 +80,7 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
 
                 AppDatabase db = AppDatabase.getInstance(getApplicationContext()); // Get the Room singleton
 
-                // Enforce uniqueness by NHS number before inserting
+
                 if (db.patientDao().countByNhs(nhs) > 0) {
                     runOnUiThread(() ->
                             Toast.makeText(this, "Patient with this NHS number already exists.", Toast.LENGTH_SHORT).show());
@@ -90,9 +89,9 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
 
                 // Map form inputs to a new Patient entity
                 Patient p = new Patient();
-                p.nhsNumber = nhs;
+                p.enPatientNhsNumber = nhs;
                 p.fullName = encryptedName;
-                p.dateOfBirth = encryptedDob; // Consider normalising/validating format upstream
+                p.dateOfBirth = encryptedDob;
                 p.phone = encryptedPhone;
                 p.email = encryptedEmail;
                 long now = System.currentTimeMillis(); // Timestamp fields in epoch millis
@@ -107,7 +106,6 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
                     finish(); // Return to the previous screen
                 });
             } catch (Exception e) {
-                // Generic error path (e.g., SQLite constraint, I/O issues)
                 runOnUiThread(() ->
                         Toast.makeText(this, "Error saving patient.", Toast.LENGTH_SHORT).show());
             }

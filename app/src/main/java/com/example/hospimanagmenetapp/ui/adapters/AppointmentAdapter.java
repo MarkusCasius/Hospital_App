@@ -38,8 +38,8 @@ public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.
 
     @Override public void onBindViewHolder(@NonNull VH h, int position) {
         Appointment a = data.get(position);
-        h.tvPatient.setText("NHS: " + a.patientNhsNumber);
-        h.tvClinician.setText(a.clinicianName + " — " + a.clinic);
+        h.tvPatient.setText("NHS: " + a.enPatientNhsNumber);
+        h.tvClinician.setText(a.enClinicianName + " — " + a.clinic);
         h.tvTime.setText(sdf.format(new Date(a.startTime)) + " → " + sdf.format(new Date(a.endTime)));
         h.itemView.setOnClickListener(v -> clicker.onClick(a));
     }

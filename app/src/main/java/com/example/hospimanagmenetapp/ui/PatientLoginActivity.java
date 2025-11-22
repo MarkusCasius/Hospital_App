@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 
 public class PatientLoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "PatientLoginActivity"; // Tag for filtering logs
+    private static final String TAG = "PatientLoginActivity";
     private EditText NhsNumber;
     private EditText Email;
     private Button btnLogin;
@@ -55,13 +55,13 @@ public class PatientLoginActivity extends AppCompatActivity {
                 Log.d(TAG, "Background thread started for DB lookup.");
                 AppDatabase db = AppDatabase.getInstance(getApplicationContext());
 
-                // 1. Fetch the patient record using only the unencrypted NHS number.
+                // Fetch the patient record using NHS number.
                 Patient patient = db.patientDao().findByNhs(nhsNumber);
 
                 boolean loginSuccess = false;
                 if (patient != null) {
                     Log.d(TAG, "Patient found for NHS number: " + nhsNumber);
-                    // 2. Decrypt the email from the database record.
+                    // Decrypt the email from the database record.
                     EncryptionManager encryptionManager = new EncryptionManager();
                     String storedEncryptedEmail = patient.email;
                     Log.d(TAG, "Encrypted email from DB: " + storedEncryptedEmail);
@@ -69,7 +69,7 @@ public class PatientLoginActivity extends AppCompatActivity {
                     String decryptedEmail = encryptionManager.decrypt(storedEncryptedEmail);
                     Log.d(TAG, "Decrypted email: " + decryptedEmail);
 
-                    // 3. Compare the decrypted email with the user's input.
+                    // Compare the decrypted email with the user's input.
                     if (emailInput.equals(decryptedEmail)) {
                         loginSuccess = true;
                         Log.i(TAG, "Login successful: Email match for NHS " + nhsNumber);
@@ -86,7 +86,7 @@ public class PatientLoginActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     if (finalLoginSuccess) {
                         // On success, save session and navigate.
-                        SessionManager.setCurrentUser(this, "PATIENT", finalPatient.nhsNumber);
+                        SessionManager.setCurrentUser(this, "PATIENT", finalPatient.enPatientNhsNumber);
                         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(PatientLoginActivity.this, AppointmentActivity.class);
                         startActivity(intent);

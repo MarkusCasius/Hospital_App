@@ -59,11 +59,11 @@ public class AppointmentRepository {
     public Appointment bookOrReschedule(Appointment appt) throws Exception {
         AppointmentDto dto = new AppointmentDto();
         dto.id = appt.id;
-        dto.patientNhsNumber = appt.patientNhsNumber;
+        dto.patientNhsNumber = appt.enPatientNhsNumber;
         dto.startTime = appt.startTime;
         dto.endTime = appt.endTime;
         dto.clinicianId = appt.clinicianId;
-        dto.clinicianName = appt.clinicianName;
+        dto.clinicianName = appt.enClinicianName;
         dto.clinic = appt.clinic;
         dto.status = "BOOKED";
 
@@ -103,11 +103,11 @@ public class AppointmentRepository {
     private Appointment map(AppointmentDto dto) {
         Appointment a = new Appointment();
         a.id = dto.id;
-        a.patientNhsNumber = dto.patientNhsNumber;
+        a.enPatientNhsNumber = dto.patientNhsNumber;
         a.startTime = dto.startTime;
         a.endTime = dto.endTime;
         a.clinicianId = dto.clinicianId;
-        a.clinicianName = dto.clinicianName;
+        a.enClinicianName = dto.clinicianName;
         a.clinic = dto.clinic;
         a.status = dto.status;
         return a;

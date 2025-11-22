@@ -3,7 +3,9 @@ package com.example.hospimanagmenetapp.feature.ehr.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.widget.Toast;
 
+import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
 import com.journeyapps.barcodescanner.BarcodeResult;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 import com.journeyapps.barcodescanner.BarcodeCallback;
@@ -17,6 +19,13 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         barcodeView = new DecoratedBarcodeView(this);
+
+        if (!RbacPolicyEvaluator.canViewEhr(this)) {
+            Toast.makeText(this, "Access Denied. You do not have permission to view this page.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(barcodeView);
         barcodeView.decodeContinuous(new BarcodeCallback() {
             @Override

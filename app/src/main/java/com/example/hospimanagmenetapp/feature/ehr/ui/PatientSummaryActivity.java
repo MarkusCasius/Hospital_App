@@ -59,7 +59,7 @@ public class PatientSummaryActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Patient selectedPatient = patientList.get(position);
-                loadClinicalRecord(selectedPatient.nhsNumber);
+                loadClinicalRecord(selectedPatient.enPatientNhsNumber);
             }
 
             @Override
@@ -72,7 +72,7 @@ public class PatientSummaryActivity extends AppCompatActivity {
             if (spPatients.getSelectedItem() != null) {
                 Patient selectedPatient = (Patient) patientList.get(spPatients.getSelectedItemPosition());
                 Intent i = new Intent(this, VitalsActivity.class);
-                i.putExtra("nhsNumber", selectedPatient.nhsNumber);
+                i.putExtra("nhsNumber", selectedPatient.enPatientNhsNumber);
                 startActivity(i);
             } else {
                 Toast.makeText(this, "Please select a patient first.", Toast.LENGTH_SHORT).show();
@@ -91,7 +91,7 @@ public class PatientSummaryActivity extends AppCompatActivity {
         ehrRepository.getAllDecryptedPatients(patients -> {
             this.patientList = patients;
             List<String> patientNames = patients.stream()
-                    .map(p -> p.fullName + " (NHS: " + p.nhsNumber + ")")
+                    .map(p -> p.fullName + " (NHS: " + p.enPatientNhsNumber + ")")
                     .collect(Collectors.toList());
 
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
@@ -104,7 +104,7 @@ public class PatientSummaryActivity extends AppCompatActivity {
             String initialNhs = getIntent().getStringExtra("nhsNumber");
             if (initialNhs != null) {
                 for (int i = 0; i < patients.size(); i++) {
-                    if (patients.get(i).nhsNumber.equals(initialNhs)) {
+                    if (patients.get(i).enPatientNhsNumber.equals(initialNhs)) {
                         spPatients.setSelection(i);
                         break;
                     }
@@ -141,7 +141,7 @@ public class PatientSummaryActivity extends AppCompatActivity {
         ehrRepository.updateClinicalRecord(currentRecord, updatedRecord -> {
             if (updatedRecord != null) {
                 Toast.makeText(this, "Clinical record updated successfully.", Toast.LENGTH_SHORT).show();
-                // Optionally reload the data to confirm it's saved
+                // Reload the data to confirm it's saved
                 loadClinicalRecord(updatedRecord.enPatientNhs);
             } else {
                 Toast.makeText(this, "Failed to update clinical record.", Toast.LENGTH_SHORT).show();

@@ -26,7 +26,7 @@ public interface AppointmentDao {
             + "( (startTime < :newEnd AND endTime > :newStart) )")
     List<Appointment> overlapping(long clinicianId, long newStart, long newEnd);
 
-    @Query("SELECT * FROM appointments WHERE patientNhsNumber = :nhsNumber ORDER BY startTime DESC")
+    @Query("SELECT * FROM appointments WHERE enPatientNhsNumber = :nhsNumber ORDER BY startTime DESC")
     List<Appointment> getAppointmentsForPatient(String nhsNumber);
 
     @Query("SELECT * FROM appointments ORDER BY startTime DESC")

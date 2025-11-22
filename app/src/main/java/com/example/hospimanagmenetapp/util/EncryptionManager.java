@@ -4,8 +4,15 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64; // For encoding byte arrays into storable strings
 
+import com.example.hospimanagmenetapp.data.entities.Appointment;
+import com.example.hospimanagmenetapp.data.entities.Patient;
+import com.example.hospimanagmenetapp.data.entities.Vitals;
+
 import java.nio.ByteBuffer;
 import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -88,5 +95,79 @@ public class EncryptionManager {
         byte[] plaintextBytes = cipher.doFinal(ciphertext);
         return new String(plaintextBytes, "UTF-8");
     }
+
+    public static List<Appointment> decryptAppointments(List<Appointment> appointments) throws Exception {
+        List<Appointment> decryptedList = new ArrayList<>();
+        EncryptionManager encryptionManager = new EncryptionManager();
+
+        for (Appointment encryptedAppointments : appointments) {
+            Appointment decryptedAppointment = new Appointment();
+            decryptedAppointment.id = encryptedAppointments.id;
+            decryptedAppointment.enPatientNhsNumber = encryptionManager.decrypt(encryptedAppointments.enPatientNhsNumber);
+            decryptedAppointment.startTime = encryptedAppointments.startTime;
+            decryptedAppointment.endTime = encryptedAppointments.endTime;
+            decryptedAppointment.enClinicianName = encryptionManager.decrypt(encryptedAppointments.enClinicianName);
+            decryptedAppointment.clinicianId = encryptedAppointments.clinicianId;
+            decryptedAppointment.clinic = encryptedAppointments.clinic;
+            decryptedAppointment.status = encryptedAppointments.status;
+
+
+            decryptedList.add(decryptedAppointment);
+        }
+
+        return (decryptedList);
+    }
+
+    public static List<Patient> decryptPatients(List<Patient> patients) throws Exception {
+        List<Patient> decryptedList = new ArrayList<>();
+        EncryptionManager encryptionManager = new EncryptionManager();
+        for (Patient encryptedPatient : patients) {
+            Patient decryptedPatient = new Patient();
+            decryptedPatient.id = encryptedPatient.id;
+            decryptedPatient.enPatientNhsNumber = encryptionManager.decrypt(encryptedPatient.enPatientNhsNumber);
+            decryptedPatient.fullName = encryptionManager.decrypt(encryptedPatient.fullName);
+            decryptedPatient.dateOfBirth = encryptionManager.decrypt(encryptedPatient.dateOfBirth);
+            decryptedPatient.email = encryptionManager.decrypt(encryptedPatient.email);
+            decryptedPatient.phone = encryptionManager.decrypt(encryptedPatient.phone);
+            decryptedPatient.createdAt = encryptedPatient.createdAt;
+            decryptedPatient.updatedAt = encryptedPatient.updatedAt;
+            decryptedList.add(decryptedPatient);
+        }
+        return decryptedList;
+    }
+
+    public static List<Vitals> decryptVitals(List<Vitals> vitals) throws Exception {
+        List<Vitals> decryptedList = new ArrayList<>();
+        EncryptionManager encryptionManager = new EncryptionManager();
+
+        for (Vitals encryptedVitals : vitals) {
+            Vitals decryptedVitals = new Vitals();
+            decryptedVitals.id = encryptedVitals.id;
+            decryptedVitals.temperature = encryptedVitals.temperature;
+            decryptedVitals.enPatientNhsNumber = encryptionManager.decrypt(encryptedVitals.enPatientNhsNumber);
+            decryptedVitals.heartRate = encryptedVitals.heartRate;
+            decryptedVitals.diastolic = encryptedVitals.diastolic;
+            decryptedVitals.systolic = encryptedVitals.systolic;
+            decryptedVitals.timestamp = encryptedVitals.timestamp;
+            decryptedVitals.synced = encryptedVitals.synced;
+            decryptedList.add(decryptedVitals);
+        }
+        return decryptedList;
+    }
+
+    public static Vitals encryptVitals(Vitals vitals) throws Exception {
+        EncryptionManager encryptionManager = new EncryptionManager();
+            Vitals encryptedVitals = new Vitals();
+            encryptedVitals.id = vitals.id;
+            encryptedVitals.temperature = vitals.temperature;
+            encryptedVitals.enPatientNhsNumber = encryptionManager.encrypt(vitals.enPatientNhsNumber);
+            encryptedVitals.heartRate = vitals.heartRate;
+            encryptedVitals.diastolic = vitals.diastolic;
+            encryptedVitals.systolic = vitals.systolic;
+            encryptedVitals.timestamp = vitals.timestamp;
+            encryptedVitals.synced = vitals.synced;
+        return encryptedVitals;
+    }
 }
+
 

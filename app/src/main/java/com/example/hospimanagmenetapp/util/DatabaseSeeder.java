@@ -91,7 +91,7 @@ public class DatabaseSeeder {
 
         // Patient for testing login
         Patient loginPatient = new Patient();
-        loginPatient.nhsNumber = "1234567890"; // Known, unencrypted NHS number
+        loginPatient.enPatientNhsNumber = encryptionManager.encrypt("1234567890"); // Known, unencrypted NHS number
         loginPatient.fullName = encryptionManager.encrypt("John Doe");
         loginPatient.dateOfBirth = encryptionManager.encrypt("1985-05-20");
         loginPatient.phone = encryptionManager.encrypt("07123456789");
@@ -104,7 +104,7 @@ public class DatabaseSeeder {
         // Other dummy patients
         for (int i = 0; i < 5; i++) {
             Patient p = new Patient();
-            p.nhsNumber = "987654321" + i;
+            p.enPatientNhsNumber = encryptionManager.encrypt("987654321" + i);
             p.fullName = encryptionManager.encrypt("Patient Name " + i);
             p.dateOfBirth = encryptionManager.encrypt("1990-01-0" + (i + 1));
             p.phone = encryptionManager.encrypt("0798765432" + i);
@@ -116,51 +116,53 @@ public class DatabaseSeeder {
         Log.d(TAG, "Patient seeding complete.");
     }
 
-    private static void seedAppointments(AppDatabase db) {
+    private static void seedAppointments(AppDatabase db) throws Exception {
         Log.d(TAG, "Seeding appointments...");
         long now = System.currentTimeMillis();
+        EncryptionManager encryptionManager = new EncryptionManager();
 
         // Appointment for our test patient "John Doe"
         Appointment apt1 = new Appointment();
-        apt1.patientNhsNumber = "1234567890"; // Belongs to John Doe
+        apt1.enPatientNhsNumber = encryptionManager.encrypt("1234567890"); // Belongs to John Doe
         apt1.startTime = now + 24 * 60 * 60 * 1000; // Tomorrow
         apt1.endTime = apt1.startTime + 30 * 60 * 1000; // 30 mins later
         apt1.clinicianId = 2; // Dr. Emily Carter
-        apt1.clinicianName = "Dr. Emily Carter";
+        apt1.enClinicianName = encryptionManager.encrypt("Dr. Emily Carter");
         apt1.clinic = "North Clinic";
         apt1.status = "BOOKED";
         db.appointmentDao().insert(apt1);
 
         // Another appointment
         Appointment apt2 = new Appointment();
-        apt2.patientNhsNumber = "9876543210";
+        apt2.enPatientNhsNumber = encryptionManager.encrypt("9876543210");
         apt2.startTime = now + 48 * 60 * 60 * 1000; // In two days
         apt2.endTime = apt2.startTime + 60 * 60 * 1000; // 1 hour later
         apt2.clinicianId = 3; // Dr. Ben Richards
-        apt2.clinicianName = "Dr. Ben Richards";
+        apt2.enClinicianName = encryptionManager.encrypt("Dr. Ben Richards");
         apt2.clinic = "South Clinic";
         apt2.status = "BOOKED";
         db.appointmentDao().insert(apt2);
 
         // Cancelled appointment
         Appointment apt3 = new Appointment();
-        apt3.patientNhsNumber = "9876543211";
+        apt3.enPatientNhsNumber = encryptionManager.encrypt("9876543211");
         apt3.startTime = now - 24 * 60 * 60 * 1000; // Yesterday
         apt3.endTime = apt3.startTime + 30 * 60 * 1000;
         apt3.clinicianId = 2; // Dr. Emily Carter
-        apt3.clinicianName = "Dr. Emily Carter";
+        apt3.enClinicianName = encryptionManager.encrypt("Dr. Emily Carter");
         apt3.clinic = "North Clinic";
         apt3.status = "CANCELLED";
         db.appointmentDao().insert(apt3);
         Log.d(TAG, "Appointment seeding complete.");
     }
 
-    private static void seedClinicalRecords(AppDatabase db) {
+    private static void seedClinicalRecords(AppDatabase db) throws Exception {
         Log.d(TAG, "Seeding clinical records...");
+        EncryptionManager encryptionManager = new EncryptionManager();
 
         // Clinical Record for John Doe
         ClinicalRecord record1 = new ClinicalRecord();
-        record1.enPatientNhs = "1234567890";
+        record1.enPatientNhs = encryptionManager.encrypt("1234567890");
         record1.allergies = "Pollen, Dust Mites";
         record1.problems = "Asthma (Mild), Seasonal Allergies";
         record1.medications = "Albuterol Inhaler (as needed)";
@@ -169,7 +171,7 @@ public class DatabaseSeeder {
 
         // Clinical Record for Patient 2
         ClinicalRecord record2 = new ClinicalRecord();
-        record2.enPatientNhs = "9876543210";
+        record2.enPatientNhs = encryptionManager.encrypt("9876543210");
         record2.allergies = "Penicillin";
         record2.problems = "Hypertension";
         record2.medications = "Lisinopril 10mg";
@@ -178,7 +180,7 @@ public class DatabaseSeeder {
 
         // Clinical Record for Patient 3
         ClinicalRecord record3 = new ClinicalRecord();
-        record3.enPatientNhs = "9876543211";
+        record3.enPatientNhs = encryptionManager.encrypt("9876543211");
         record3.allergies = "None Known";
         record3.problems = "None Known";
         record3.medications = "None";

@@ -4,9 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import androidx.paging.Pager;
-import androidx.paging.PagingConfig;
-import androidx.paging.PagingData;
+
 import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.dao.ClinicalRecordDao;
 import com.example.hospimanagmenetapp.data.dao.PatientDao;
@@ -23,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-import kotlinx.coroutines.flow.Flow;
+
 import retrofit2.Response;
 
 public class EhrRepository {
@@ -50,16 +48,14 @@ public class EhrRepository {
     public void getAllDecryptedPatients(Consumer<List<Patient>> callback) {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Patient> encryptedPatients = patientDao.getAll();
-            List<Patient> decryptedPatients = new ArrayList<>();
-            for (Patient p : encryptedPatients) {
-                try {
-                    p.fullName = encryptionManager.decrypt(p.fullName);
-                    decryptedPatients.add(p);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to decrypt patient name for " + p.nhsNumber, e);
-                }
+            List<Patient> decryptedPatients = null;
+            try {
+                decryptedPatients = EncryptionManager.decryptPatients(encryptedPatients);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-            new Handler(Looper.getMainLooper()).post(() -> callback.accept(decryptedPatients));
+            List<Patient> finalDecryptedPatients = decryptedPatients;
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(finalDecryptedPatients));
         });
     }
 
@@ -82,8 +78,27 @@ public class EhrRepository {
             }
             // Return from Truth (database)
             Log.d(TAG, "Fetching clinical record from local database.");
-            ClinicalRecord record = clinicalRecordDao.findByPatient(nhsNumber);
-            new Handler(Looper.getMainLooper()).post(() -> callback.accept(record));
+            // Fetch all records from the database
+            List<ClinicalRecord> allRecords = clinicalRecordDao.getAllRecords();
+            ClinicalRecord foundRecord = null;
+
+            // Iterate, decrypt, and compare
+            for (ClinicalRecord record : allRecords) {
+                try {
+                    String decryptedNhs = encryptionManager.decrypt(record.enPatientNhs);
+                    if (nhsNumber.equals(decryptedNhs)) {
+                        foundRecord = record; // Record Found
+                        break;
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to decrypt NHS number for record id: " + record.id, e);
+                    // Continue to the next record
+                }
+            }
+
+            // Return the found record (or null) to the UI thread
+            final ClinicalRecord finalFoundRecord = foundRecord;
+            new Handler(Looper.getMainLooper()).post(() -> callback.accept(finalFoundRecord));
         });
     }
 
@@ -135,7 +150,7 @@ public class EhrRepository {
                 return true;
             }
         } catch (IOException e) {
-            Log.e(TAG, "Failed to sync vitals for patient " + vitals.enPatientNhs, e);
+            Log.e(TAG, "Failed to sync vitals for patient " + vitals.enPatientNhsNumber, e);
         }
         return false;
     }
@@ -146,6 +161,27 @@ public class EhrRepository {
 
     public List<Vitals> getVitalsForPatientPaged(String nhsNumber, int pageSize, int offset) {
         return vitalsDao.getVitalsForPatientPaged(nhsNumber, pageSize, offset);
+    }
+
+    public List<Vitals> getAllVitalsForPatient(String decryptedNhsNumber) {
+        // Fetch all vitals from the database.
+        List<Vitals> allVitals = vitalsDao.getAllVitals();
+        List<Vitals> patientVitals = new ArrayList<>();
+
+        // Iterate, decrypt the stored NHS number, and compare.
+        for (Vitals vital : allVitals) {
+            try {
+                String storedDecryptedNhs = encryptionManager.decrypt(vital.enPatientNhsNumber);
+                // If it matches, add it to our list.
+                if (decryptedNhsNumber.equals(storedDecryptedNhs)) {
+                    patientVitals.add(vital);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to decrypt NHS number for vital record id: " + vital.id, e);
+            }
+        }
+        // Return the fully filtered list of vitals for the specific patient.
+        return patientVitals;
     }
 
     private ClinicalRecord map(ClinicalRecordDto dto) {
@@ -175,7 +211,7 @@ public class EhrRepository {
 
     private VitalsDto mapToDto(Vitals vitals) {
         VitalsDto dto = new VitalsDto();
-        dto.enPatientNhs = vitals.enPatientNhs;
+        dto.enPatientNhs = vitals.enPatientNhsNumber;
         dto.temperature = vitals.temperature;
         dto.heartRate = vitals.heartRate;
         dto.systolic = vitals.systolic;

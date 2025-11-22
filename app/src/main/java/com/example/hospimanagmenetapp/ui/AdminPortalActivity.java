@@ -1,11 +1,13 @@
 package com.example.hospimanagmenetapp.ui; // UI layer package for Activities
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;            // Base Activity with AppCompat features
 import androidx.recyclerview.widget.LinearLayoutManager;    // Lays out RecyclerView items in a vertical list
 import androidx.recyclerview.widget.RecyclerView;           // Efficient scrolling list/grid container
 
 import android.os.Bundle;          // Lifecycle state bundle
 import android.text.TextUtils;     // Simple string checks (e.g., isEmpty)
+import android.util.Log;
 import android.widget.ArrayAdapter; // Adapter to back the Spinner with enum values
 import android.widget.Button;      // UI widget: Button
 import android.widget.EditText;    // UI widget: text input
@@ -33,6 +35,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
     private Spinner spRole;                    // Role picker (ADMIN/STAFF/etc.)
     private Button btnRegisterStaff, btnRefresh; // Actions to register and refresh the list
     private RecyclerView rvStaff;              // Displays the current staff members
+    private static final String TAG = "PatientLoginActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
@@ -97,12 +100,27 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 EncryptionManager encryptionManager = new EncryptionManager();
+                StaffDao dao = AppDatabase.getInstance(getApplicationContext()).staffDao();
+
+                List<Staff> allStaff = dao.getAll();
+                for (Staff staffMember : allStaff) {
+                    try {
+                        String decryptedEmail = encryptionManager.decrypt(staffMember.email);
+                        if (email.equalsIgnoreCase(decryptedEmail)) {
+                            // A staff member with this email already exists.
+                            runOnUiThread(() ->
+                                    Toast.makeText(this, "Error: A staff member with this email already exists.", Toast.LENGTH_LONG).show());
+                            return; // Stop the registration process.
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to decrypt email for staff ID: " + staffMember.id, e);
+                    }
+                }
 
                 String encryptedName = encryptionManager.encrypt(name);
                 String encryptedEmail = encryptionManager.encrypt(email);
                 String encryptedPin = encryptionManager.encrypt(pin);
 
-                StaffDao dao = AppDatabase.getInstance(getApplicationContext()).staffDao(); // DAO handle
                 Staff s = new Staff();          // Create new entity
                 s.fullName = encryptedName;              // Map inputs to fields
                 s.email = encryptedEmail;
@@ -120,6 +138,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
                     loadStaff();         // Refresh the RecyclerView with latest data
                 });
             } catch (Exception e) { // Likely a uniqueness violation on email (if enforced)
+                Log.e(TAG, "Error registering staff", e);
                 runOnUiThread(() ->
                         Toast.makeText(this, "Error: email may already exist.", Toast.LENGTH_SHORT).show());
             }
@@ -148,13 +167,50 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
                     decryptedList.add(decryptedStaff);
                 }
 
-                // Pass the DECRYPTED list to the adapter on the UI thread
-                runOnUiThread(() -> rvStaff.setAdapter(new StaffAdapter(decryptedList)));
+                // Pass the list to the adapter on the UI thread
+                runOnUiThread(() -> {// The activity will need to implement StaffAdapter.OnStaffClickListener
+                    StaffAdapter adapter = new StaffAdapter(decryptedList, this::showDeleteConfirmation);
+                    rvStaff.setAdapter(adapter);
+                });
 
             } catch (Exception e) {
                 // If decryption or database access fails, show an error
                 runOnUiThread(() ->
                         Toast.makeText(this, "Failed to load and decrypt staff data.", Toast.LENGTH_LONG).show());
+            }
+        });
+    }
+
+    private void showDeleteConfirmation(final Staff staff) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Staff Member")
+                .setMessage("Are you sure you want to delete " + staff.fullName + "? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteStaff(staff))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+    private void deleteStaff(final Staff staff) {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // Re-encrypt the identifying fields before deleting, as the DAO expects an encrypted object
+                EncryptionManager encryptionManager = new EncryptionManager();
+                Staff staffToDelete = new Staff();
+                staffToDelete.id = staff.id; // The primary key
+                staffToDelete.fullName = encryptionManager.encrypt(staff.fullName);
+                staffToDelete.email = encryptionManager.encrypt(staff.email);
+                staffToDelete.role = staff.role;
+                staffToDelete.adminPin = staff.adminPin != null ? encryptionManager.encrypt(staff.adminPin) : null;
+
+                AppDatabase.getInstance(getApplicationContext()).staffDao().delete(staffToDelete);
+
+                // On success, show a toast and refresh the list
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Staff member deleted.", Toast.LENGTH_SHORT).show();
+                    loadStaff(); // Refresh the RecyclerView
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, "Error deleting staff member.", Toast.LENGTH_SHORT).show());
             }
         });
     }

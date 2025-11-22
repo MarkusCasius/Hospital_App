@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "clinical_records")
 public class ClinicalRecord {
     @PrimaryKey(autoGenerate = true) public long id;
-    public String enPatientNhs;
+    public String enPatientNhs; // Encrypted
     public String allergies;
     public String medications;
     public String problems;

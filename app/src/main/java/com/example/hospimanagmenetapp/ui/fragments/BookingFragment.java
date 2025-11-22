@@ -52,7 +52,7 @@ public class BookingFragment extends Fragment {
         BookingFragment fragment = new BookingFragment();
         Bundle args = new Bundle();
         args.putLong("id", a.id);
-        args.putString("patientNhs", a.patientNhsNumber);
+        args.putString("patientNhs", a.enPatientNhsNumber);
         args.putLong("startTime", a.startTime);
         args.putLong("endTime", a.endTime);
         args.putLong("clinicianId", a.clinicianId);
@@ -253,9 +253,9 @@ public class BookingFragment extends Fragment {
                 appointmentToSave.id = getArguments().getLong("id", 0);
 
                 // Populate the rest of the details from the UI
-                appointmentToSave.patientNhsNumber = nhs;
+                appointmentToSave.enPatientNhsNumber = nhs;
                 appointmentToSave.clinicianId = clinicianId;
-                appointmentToSave.clinicianName = clinicianName;
+                appointmentToSave.enClinicianName = clinicianName;
                 appointmentToSave.startTime = start;
                 appointmentToSave.endTime = end;
                 appointmentToSave.clinic = clinic;
