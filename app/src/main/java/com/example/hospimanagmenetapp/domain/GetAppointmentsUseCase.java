@@ -1,23 +1,24 @@
 package com.example.hospimanagmenetapp.domain;
 
 import android.content.Context;
-import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
+import com.example.hospimanagmenetapp.data.repo.AppointmentRepository;
 import java.util.Calendar;
 import java.util.List;
 
 public class GetAppointmentsUseCase {
-    private final AppDatabase db;
+    private final AppointmentRepository repo;
 
     public enum DateFilter {
         ALL, TODAY, PAST, FUTURE
     }
 
     public GetAppointmentsUseCase(Context context) {
-        this.db = AppDatabase.getInstance(context);
+        this.repo = new AppointmentRepository(context);
     }
 
-    public List<Appointment> execute(String clinic, DateFilter dateFilter) {
+    // Domain for getting appointments, based on a filter and a clinic
+    public List<Appointment> execute(String clinic, DateFilter dateFilter) throws Exception {
         long now = System.currentTimeMillis();
         Calendar todayStart = Calendar.getInstance();
         todayStart.set(Calendar.HOUR_OF_DAY, 0);
@@ -29,14 +30,14 @@ public class GetAppointmentsUseCase {
 
         switch (dateFilter) {
             case TODAY:
-                return db.appointmentDao().getAppointmentsForClinicBetween(clinic, todayStart.getTimeInMillis(), todayEnd.getTimeInMillis());
+                return repo.getAppointmentsBetween(clinic, todayStart.getTimeInMillis(), todayEnd.getTimeInMillis());
             case PAST:
-                return db.appointmentDao().getAppointmentsForClinicBefore(clinic, now);
+                return repo.getAppointmentsBefore(clinic, now);
             case FUTURE:
-                return db.appointmentDao().getAppointmentsForClinicAfter(clinic, now);
+                return repo.getAppointmentsAfter(clinic, now);
             case ALL:
             default:
-                return db.appointmentDao().getAllAppointmentsForClinic(clinic);
+                return repo.getAllAppointmentsForClinic(clinic);
         }
     }
 }

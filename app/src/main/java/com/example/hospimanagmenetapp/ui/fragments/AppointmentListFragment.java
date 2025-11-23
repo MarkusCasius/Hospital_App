@@ -14,25 +14,29 @@ import android.widget.*;
 
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
-import com.example.hospimanagmenetapp.domain.GetTodaysAppointmentsUseCase;
+import com.example.hospimanagmenetapp.data.entities.Clinic;
+import com.example.hospimanagmenetapp.domain.GetClinicsUseCase;
 import com.example.hospimanagmenetapp.domain.GetAppointmentsUseCase;
 import com.example.hospimanagmenetapp.ui.adapters.AppointmentAdapter;
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.List;
 
 public class AppointmentListFragment extends Fragment {
+
+    // After all the checks with AppointmentActivity, the fragment then loads the data into the UI,
+    // communicating with the database to get the appointments based on filters.
+
 
     private Spinner spClinic, spDateFilter;
     private ProgressBar progress;
     private RecyclerView rv;
-    private FloatingActionButton fabBookAppointment;
+    private List<Clinic> availableClinics = new ArrayList<>();
 
     @Nullable
     @Override
@@ -42,13 +46,9 @@ public class AppointmentListFragment extends Fragment {
         spDateFilter = v.findViewById(R.id.spDateFilter);
         progress = v.findViewById(R.id.progress);
         rv = v.findViewById(R.id.rvAppointments);
-        fabBookAppointment = v.findViewById(R.id.fabBookAppointment);
+        FloatingActionButton fabBookAppointment = v.findViewById(R.id.fabBookAppointment);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         setupFilters();
-        ArrayAdapter<String> clinics = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"All Clinics", "North Clinic", "South Clinic"});
-        spClinic.setAdapter(clinics);
 
         v.findViewById(R.id.btnRefresh).setOnClickListener(b -> loadData());
 
@@ -71,26 +71,63 @@ public class AppointmentListFragment extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
-
-        loadData();
         return v;
     }
 
     private void setupFilters() {
+        AdapterView.OnItemSelectedListener filterChangeListener = new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                loadData(); // Call loadData whenever a selection is made.
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) { }
+        };
+
         // Clinic filter
-        ArrayAdapter<String> clinics = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"All Clinics", "North Clinic", "South Clinic"});
-        spClinic.setAdapter(clinics);
+        ArrayAdapter<String> clinicsAdapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item, new ArrayList<>());
+        spClinic.setAdapter(clinicsAdapter);
+        spClinic.setOnItemSelectedListener(filterChangeListener);
 
         // Date filter
         ArrayAdapter<GetAppointmentsUseCase.DateFilter> dateFilters = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_dropdown_item, GetAppointmentsUseCase.DateFilter.values());
         spDateFilter.setAdapter(dateFilters);
         spDateFilter.setSelection(Arrays.asList(GetAppointmentsUseCase.DateFilter.values()).indexOf(GetAppointmentsUseCase.DateFilter.TODAY));
+        spDateFilter.setOnItemSelectedListener(filterChangeListener);
+
+        loadClinics();
+    }
+
+    private void loadClinics() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                availableClinics = new GetClinicsUseCase(requireContext()).execute();
+                List<String> clinicNames = new ArrayList<>();
+                clinicNames.add("All Clinics"); // Add the "All" option first
+                for (Clinic clinic : availableClinics) {
+                    clinicNames.add(clinic.name);
+                }
+
+                requireActivity().runOnUiThread(() -> {
+                    ArrayAdapter<String> adapter = (ArrayAdapter<String>) spClinic.getAdapter();
+                    adapter.clear();
+                    adapter.addAll(clinicNames);
+                    adapter.notifyDataSetChanged();
+                });
+            } catch (Exception e) {
+                Log.e("AppointmentList", "Failed to load clinics", e);
+            }
+        });
     }
 
     private void loadData() {
+        if (spClinic.getAdapter() == null || spClinic.getSelectedItem() == null ||
+                spDateFilter.getAdapter() == null || spDateFilter.getSelectedItem() == null) {
+            return;
+        }
+
         progress.setVisibility(View.VISIBLE);
         String clinic = spClinic.getSelectedItemPosition() == 0 ? null : spClinic.getSelectedItem().toString();
         GetAppointmentsUseCase.DateFilter dateFilter = (GetAppointmentsUseCase.DateFilter) spDateFilter.getSelectedItem();

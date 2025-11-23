@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
 import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
 import com.journeyapps.barcodescanner.BarcodeResult;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
@@ -16,8 +17,20 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private boolean barcodeDetected = false;
 
+    // The barcode scanner activity is between the main activity and the patient summary activity.
+    // It opens an activity that allows the user to scan a QR code to pass through an NHS number
+    // If there isn't a QR code to scan or camera isn't available, then it navigates to the patient summary activity
+    // without passing through an NHS number.
+
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         barcodeView = new DecoratedBarcodeView(this);
 
         if (!RbacPolicyEvaluator.canViewEhr(this)) {

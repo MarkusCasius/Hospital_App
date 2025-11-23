@@ -15,17 +15,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.AppDatabase;
-import com.example.hospimanagmenetapp.data.dao.AppointmentDao;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
-import com.example.hospimanagmenetapp.data.entities.Staff;
 import com.example.hospimanagmenetapp.ui.adapters.AppointmentAdapter;
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
 public class PatientAppointmentListFragment extends Fragment {
+
+    // A seperate fragment for displaying appointments to patients. However, currently is neglected
+    // due to having to focus on other features.
 
     private static final String ARG_PATIENT_NHS = "patient_nhs";
     private RecyclerView rvPatientAppointments;
@@ -33,10 +33,6 @@ public class PatientAppointmentListFragment extends Fragment {
     private TextView tvNoAppointments;
     private String patientNhsNumber;
 
-    /**
-     * Factory method to create a new instance of this fragment
-     * using the provided patient NHS number.
-     */
     public static PatientAppointmentListFragment newInstance(String patientNhs) {
         PatientAppointmentListFragment fragment = new PatientAppointmentListFragment();
         Bundle args = new Bundle();

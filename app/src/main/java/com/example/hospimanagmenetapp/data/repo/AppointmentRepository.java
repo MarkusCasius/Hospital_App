@@ -5,15 +5,20 @@ import android.util.Log;
 
 import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.dao.AppointmentDao;
+import com.example.hospimanagmenetapp.data.dao.ClinicDao;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
+import com.example.hospimanagmenetapp.data.entities.Clinic;
 import com.example.hospimanagmenetapp.network.ApiClient;
 import com.example.hospimanagmenetapp.network.dto.AppointmentDto;
+import com.example.hospimanagmenetapp.network.dto.ClinicDto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import retrofit2.Response;
+
+// A class for handling all the database interactions via calling the API. Designed with offline-first
+// principles
 
 public class AppointmentRepository {
 
@@ -21,41 +26,88 @@ public class AppointmentRepository {
 
     private final AppointmentDao dao;
     private final ApiClient api;
+    private final ClinicDao clinicDao;
 
     public AppointmentRepository(Context ctx) {
-        this.dao = AppDatabase.getInstance(ctx).appointmentDao();
+        AppDatabase db = AppDatabase.getInstance(ctx);
+        this.dao = db.appointmentDao();
+        this.clinicDao = db.clinicDao();
         this.api = new ApiClient(ctx);
     }
 
-    public List<Appointment> getTodaysAppointments(String clinic, long start, long end) throws Exception {
+    // Fetches and syncs with the local database any clinics in the external database
+    public List<Clinic> getAndCacheClinics() {
+        try {
+            Log.d(TAG, "Fetching clinics from network to refresh cache.");
+            Response<List<ClinicDto>> response = api.appointmentApi().getClinics().execute();
+
+            if (response.isSuccessful() && response.body() != null) {
+                List<Clinic> clinicsToCache = new ArrayList<>();
+                for (ClinicDto dto : response.body()) {
+                    Clinic clinic = new Clinic();
+                    clinic.name = dto.name;
+                    clinic.location = dto.location;
+                    clinicsToCache.add(clinic);
+                }
+                // Cache the fresh data to the database
+                clinicDao.insertAll(clinicsToCache);
+                Log.d(TAG, "Successfully cached " + clinicsToCache.size() + " clinics from network.");
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to sync clinics from network, will use local data.", e);
+        }
+
+        // Always return the data from the local database (single source of truth)
+        return clinicDao.getAll();
+    }
+
+    // Fetches and syncs with the local database any appointments in the external database
+    private void refreshCachedAppointments() {
         try {
             // fetch mock network first
-            Response<List<AppointmentDto>> resp = api.appointmentApi().getTodaysAppointments(clinic).execute();
-            List<Appointment> mapped = new ArrayList<>();
+            Log.d(TAG, "Fetching appointments from network to cache.");
+            Response<List<AppointmentDto>> resp = api.appointmentApi().getAppointments().execute();
+
             if (resp.isSuccessful() && resp.body() != null) {
+            List<Appointment> mapped = new ArrayList<>();
                 for (AppointmentDto dto : resp.body()) {
                     Appointment a = map(dto);
                     mapped.add(a);
                 }
+                // cache to DB (simplified: insert if none today)
+                for (Appointment a : mapped) {
+                    dao.insert(a);
+                }
+                Log.d(TAG, "Successfully fetched and cached " + mapped.size() + " appointments from network.");
             }
-            // cache to DB (simplified: insert if none today)
-            for (Appointment a : mapped) {
-                dao.insert(a);
-            }
-        } catch (Exception e) {}
-        Log.d(TAG, "Fetching today's appointments directly from the database.");
-        // List<Appointment> appointments = dao.findBetween(start, end);
-        List<Appointment> appointments = dao.getAllAppointments();
-        Log.d(TAG, "Appointments: " + appointments);
-        if (clinic == null) {
-            Log.d(TAG, "No clinic specified. Returning all appointments.");
-            return appointments;
+
+        } catch (Exception e) {
+            Log.w(TAG, "Network call failed, will fall back to existing local data.", e);
         }
-        return appointments.stream()
-                .filter(a -> clinic.equals(a.clinic))
-                .collect(Collectors.toList());
     }
 
+    public List<Appointment> getAppointmentsBetween(String clinic, long startTime, long endTime) {
+        refreshCachedAppointments();
+        return dao.getAppointmentsForClinicBetween(clinic, startTime, endTime);
+    }
+
+    public List<Appointment> getAppointmentsBefore(String clinic, long endTime) {
+        refreshCachedAppointments();
+        return dao.getAppointmentsForClinicBefore(clinic, endTime);
+    }
+
+    public List<Appointment> getAppointmentsAfter(String clinic, long startTime) {
+        refreshCachedAppointments();
+        return dao.getAppointmentsForClinicAfter(clinic, startTime);
+    }
+
+    public List<Appointment> getAllAppointmentsForClinic(String clinic) {
+        refreshCachedAppointments();
+        return dao.getAllAppointmentsForClinic(clinic);
+    }
+
+    // Booking or rescheduling appointments. After getting the mapping it to the dto, it sends a call to the API
+    // Then saves locally as the database isn't set up
     public Appointment bookOrReschedule(Appointment appt) throws Exception {
         AppointmentDto dto = new AppointmentDto();
         dto.id = appt.id;
@@ -67,7 +119,7 @@ public class AppointmentRepository {
         dto.clinic = appt.clinic;
         dto.status = "BOOKED";
 
-        Log.d(TAG, "Attempting to book/reschedule appointment via API. ID: " + dto.id + ", NHS: " + dto.patientNhsNumber);
+        Log.d(TAG, "Attempting to book/reschedule appointment via API. ID: ");
 
         Response<AppointmentDto> resp = api.appointmentApi().bookOrReschedule(dto).execute();
         if (resp.isSuccessful() && resp.body() != null) {
@@ -86,16 +138,15 @@ public class AppointmentRepository {
             return saved;
         } else {
             // Debugging
-            String errorBody = resp.errorBody() != null ? resp.errorBody().string() : "null";
             Log.e(TAG, "Booking failed. Response was not successful.");
             Log.e(TAG, "Response Code: " + resp.code());
             Log.e(TAG, "Response Message: " + resp.message());
-            Log.e(TAG, "Error Body: " + errorBody);
 
             throw new IllegalStateException("Booking failed: API returned code " + resp.code() + ". Check logs for details.");
         }
     }
 
+    // Detects if there is any overlapping appointments
     public List<Appointment> detectConflicts(long clinicianId, long start, long end, long appointmentId) {
         return dao.getConflictingAppointments(clinicianId, start, end, appointmentId);
     }

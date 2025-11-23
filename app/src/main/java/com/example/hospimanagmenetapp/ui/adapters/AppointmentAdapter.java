@@ -18,6 +18,8 @@ import java.util.Locale;
 
 public class AppointmentAdapter extends RecyclerView.Adapter<AppointmentAdapter.VH> {
 
+    // Used to append appointment information into the AppointmentListFragment's UI.
+
     public interface Clicker { void onClick(Appointment a); }
 
     private final List<Appointment> data;

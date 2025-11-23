@@ -9,6 +9,7 @@ import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.entities.Staff;
 import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 
 import java.util.concurrent.Executors;
 
@@ -31,19 +32,16 @@ public class DatabaseSeeder {
 
         Log.d(TAG, "Database not seeded. Starting seed process.");
         Executors.newSingleThreadExecutor().execute(() -> {
+            try {
             AppDatabase db = AppDatabase.getInstance(context);
 
-            try {
-                seedStaff(context, db);
+            seedStaff(context, db);
+            seedPatients(context, db);
+            seedAppointments(db);
+            seedClinicalRecords(db);
 
-                seedPatients(context, db);
-
-                seedAppointments(db);
-
-                seedClinicalRecords(db);
-
-                prefs.edit().putBoolean(KEY_SEEDED, true).apply();
-                Log.i(TAG, "Database successfully seeded.");
+            prefs.edit().putBoolean(KEY_SEEDED, true).apply();
+            Log.i(TAG, "Database successfully seeded.");
 
             } catch (Exception e) {
                 Log.e(TAG, "Failed to seed database", e);

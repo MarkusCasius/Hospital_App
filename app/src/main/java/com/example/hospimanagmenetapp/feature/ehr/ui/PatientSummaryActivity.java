@@ -17,6 +17,7 @@ import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
 import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.repo.EhrRepository;
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
 import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
 
 import java.util.List;
@@ -28,14 +29,22 @@ public class PatientSummaryActivity extends AppCompatActivity {
     private Spinner spPatients;
     private TextView tvHeader;
     private EditText etProblems, etAllergies, etMedications;
-    private Button btnVitals, btnSave;
     private List<Patient> patientList;
     private ClinicalRecord currentRecord;
 
+    // Activity displays a patient summary, allowing users to input new details and save them.
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_patient_summary);
 
         if (!RbacPolicyEvaluator.canViewEhr(this)) {
@@ -50,8 +59,8 @@ public class PatientSummaryActivity extends AppCompatActivity {
         etProblems = findViewById(R.id.etProblems);
         etAllergies = findViewById(R.id.etAllergies);
         etMedications = findViewById(R.id.etMedications);
-        btnVitals = findViewById(R.id.btnRecordVitals);
-        btnSave = findViewById(R.id.btnSave);
+        Button btnVitals = findViewById(R.id.btnRecordVitals);
+        Button btnSave = findViewById(R.id.btnSave);
 
         loadAllPatients();
 
@@ -134,6 +143,9 @@ public class PatientSummaryActivity extends AppCompatActivity {
             return;
         }
 
+        Patient selectedPatient = patientList.get(spPatients.getSelectedItemPosition());
+        final String decryptedNhsNumber = selectedPatient.enPatientNhsNumber;
+
         currentRecord.problems = etProblems.getText().toString();
         currentRecord.allergies = etAllergies.getText().toString();
         currentRecord.medications = etMedications.getText().toString();
@@ -142,7 +154,7 @@ public class PatientSummaryActivity extends AppCompatActivity {
             if (updatedRecord != null) {
                 Toast.makeText(this, "Clinical record updated successfully.", Toast.LENGTH_SHORT).show();
                 // Reload the data to confirm it's saved
-                loadClinicalRecord(updatedRecord.enPatientNhs);
+                loadClinicalRecord(decryptedNhsNumber);
             } else {
                 Toast.makeText(this, "Failed to update clinical record.", Toast.LENGTH_SHORT).show();
             }

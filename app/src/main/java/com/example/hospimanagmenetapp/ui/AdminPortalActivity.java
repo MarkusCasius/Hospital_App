@@ -15,17 +15,15 @@ import android.widget.Spinner;     // UI widget: drop-down selection
 import android.widget.Toast;       // Lightweight user notifications
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
 
 import com.example.hospimanagmenetapp.R;                     // Resource references (layouts, IDs)
 import com.example.hospimanagmenetapp.data.AppDatabase;      // Room database singleton
 import com.example.hospimanagmenetapp.data.dao.StaffDao;     // DAO for Staff operations
 import com.example.hospimanagmenetapp.data.entities.Staff;   // Staff entity (has Role enum, email, PIN)
+import com.example.hospimanagmenetapp.data.repo.StaffRepository;
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
 import com.example.hospimanagmenetapp.ui.adapters.StaffAdapter; // RecyclerView adapter to render staff list
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 import com.example.hospimanagmenetapp.util.SessionManager;   // Simple session storage for RBAC checks
 
 import java.util.ArrayList;
@@ -33,10 +31,10 @@ import java.util.Arrays;             // Utility to turn arrays into Lists
 import java.util.List;               // List interface for collections
 import java.util.concurrent.Executors; // Run DB work off the main thread
 
-import javax.crypto.EncryptedPrivateKeyInfo;
 
 public class AdminPortalActivity extends AppCompatActivity { // Admin portal: manage staff accounts
 
+    private StaffRepository staffRepository;
     private EditText etName, etEmail, etPin;   // Inputs for staff name/email and admin PIN (if role is ADMIN)
     private Spinner spRole, spExpertise;                    // Role picker (ADMIN/STAFF/etc.)
     private Button btnRegisterStaff, btnRefresh; // Actions to register and refresh the list
@@ -46,7 +44,16 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
         super.onCreate(savedInstanceState);
+
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_admin_portal);  // Inflate the admin portal layout
+        staffRepository = new StaffRepository(this); // Initialize repository
 
         // Bind views from XML
         etName = findViewById(R.id.etStaffName);
@@ -144,7 +151,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
                 EncryptionManager encryptionManager = new EncryptionManager();
                 StaffDao dao = AppDatabase.getInstance(getApplicationContext()).staffDao();
 
-                List<Staff> allStaff = dao.getAll();
+                List<Staff> allStaff = staffRepository.getAndCacheAllStaff();
                 for (Staff staffMember : allStaff) {
                     try {
                         String decryptedEmail = encryptionManager.decrypt(staffMember.email);
@@ -159,18 +166,14 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
                     }
                 }
 
-                String encryptedName = encryptionManager.encrypt(name);
-                String encryptedEmail = encryptionManager.encrypt(email);
-                String encryptedPin = encryptionManager.encrypt(pin);
-
                 Staff s = new Staff();          // Create new entity
-                s.fullName = encryptedName;              // Map inputs to fields
-                s.email = encryptedEmail;
+                s.fullName = name;
+                s.email = email;
                 s.role = role;
-                s.adminPin = (role == Staff.Role.ADMIN) ? encryptedPin : null; // Store PIN only for admins
+                s.adminPin = (role == Staff.Role.ADMIN) ? pin : null; // Store PIN only for admins
                 s.expertise = (role == Staff.Role.CLINICIAN) ? expertise : null; // Store expertise only for clinicians
 
-                dao.insert(s); // Persist to Room (unique constraints may throw)
+                staffRepository.registerStaff(EncryptionManager.encryptStaff(s));
 
                 // On success, clear form and refresh list on the UI thread
                 runOnUiThread(() -> {
@@ -193,7 +196,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 // Fetch all staff from the database
-                List<Staff> encryptedList = AppDatabase.getInstance(getApplicationContext()).staffDao().getAll();
+                List<Staff> encryptedList = staffRepository.getAndCacheAllStaff();
                 List<Staff> decryptedList = new ArrayList<>();
 
                 for (Staff encryptedStaff : encryptedList) {
@@ -228,7 +231,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
             try {
                 // Re-encrypt the identifying fields before deleting, as the DAO expects an encrypted object
                 Staff staffToDelete = EncryptionManager.encryptStaff(staff);
-                AppDatabase.getInstance(getApplicationContext()).staffDao().delete(staffToDelete);
+                staffRepository.deleteStaff(EncryptionManager.encryptStaff(staff));
 
                 // On success, show a toast and refresh the list
                 runOnUiThread(() -> {

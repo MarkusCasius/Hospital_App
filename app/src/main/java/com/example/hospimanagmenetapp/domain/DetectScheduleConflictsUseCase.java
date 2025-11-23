@@ -14,6 +14,7 @@ public class DetectScheduleConflictsUseCase {
         this.repo = new AppointmentRepository(ctx);
     }
 
+    // Domain for checking whether there is a conflict in appointments
     public boolean hasConflict(long clinicianId, long start, long end, long appointmentIdToIgnore) {
         List<Appointment> overlaps = repo.detectConflicts(clinicianId, start, end, appointmentIdToIgnore);
         return overlaps != null && !overlaps.isEmpty();

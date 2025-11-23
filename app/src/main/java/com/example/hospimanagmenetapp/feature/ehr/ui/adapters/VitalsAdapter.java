@@ -37,7 +37,7 @@ public class VitalsAdapter extends ListAdapter<Vitals, VitalsAdapter.VitalsViewH
         }
     }
 
-    // ViewHolder class for displaying a single item
+    // ViewHolder class for displaying a single item, specifically the vitals of the patient
     static class VitalsViewHolder extends RecyclerView.ViewHolder {
         private final TextView tvTimestamp;
         private final TextView tvVitalsDetails;

@@ -6,9 +6,10 @@ import android.content.Intent;  // Used to navigate between Activities
 import android.os.Bundle;       // Holds saved instance state for lifecycle
 import android.widget.Button;   // UI widget: Button
 import android.widget.TextView; // UI widget: TextView
+import android.widget.Toast;
 
 import com.example.hospimanagmenetapp.feature.ehr.ui.BarcodeScannerActivity;
-import com.example.hospimanagmenetapp.feature.ehr.ui.PatientSummaryActivity;
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
 import com.example.hospimanagmenetapp.ui.PatientLoginActivity;
 import com.example.hospimanagmenetapp.ui.AdminLoginActivity;        // Screen for admin sign-in
 import com.example.hospimanagmenetapp.ui.PatientRegistrationActivity; // Screen to register patients
@@ -17,17 +18,28 @@ import com.example.hospimanagmenetapp.util.SessionManager;          // Helper fo
 public class MainActivity extends AppCompatActivity { // Entry Activity shown at app launch
 
     private TextView tvWelcome;       // Header showing session state
-    private Button btnPatientRegistration, btnAdminPortal, btnLogout, btnAppointments, btnPatientLogin, btnPatientRecords; // Main menu buttons
+    private Button btnAdminPortal;
+    private Button btnLogout;
+    private Button btnAppointments;
+    private Button btnPatientLogin;
+    private Button btnPatientRecords; // Main menu buttons
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Lifecycle: called when Activity is created
         super.onCreate(savedInstanceState);              // Always call the superclass first
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);          // Inflate the layout defined in activity_main.xml
 
         // Bind views from the layout to fields
         tvWelcome = findViewById(R.id.tvWelcome);
         btnPatientLogin = findViewById(R.id.btnPatientLogin);
-        btnPatientRegistration = findViewById(R.id.btnPatientRegistration);
+        Button btnPatientRegistration = findViewById(R.id.btnPatientRegistration);
         btnAdminPortal = findViewById(R.id.btnAdminPortal);
         btnLogout = findViewById(R.id.btnLogout);
         btnAppointments = findViewById(R.id.btnAppointments);

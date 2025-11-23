@@ -12,6 +12,9 @@ import java.util.List;
 public class VitalsSyncWorker extends Worker {
     private static final String TAG = "VitalsSyncWorker";
 
+    // Background sync worker for syncing the vitals with the database periodically to ensure
+    // data consistency and accuracy.
+
     public VitalsSyncWorker(@NonNull Context ctx, @NonNull WorkerParameters params) {
         super(ctx, params);
     }

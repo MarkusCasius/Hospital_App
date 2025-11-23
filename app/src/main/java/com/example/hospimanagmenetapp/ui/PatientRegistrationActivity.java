@@ -9,10 +9,12 @@ import android.widget.EditText;  // UI widget: text input
 import android.widget.Toast;     // Lightweight user notifications
 
 import com.example.hospimanagmenetapp.R;                    // Resource IDs (layouts, strings, etc.)
-import com.example.hospimanagmenetapp.data.AppDatabase;     // Room database singleton
 import com.example.hospimanagmenetapp.data.entities.Patient; // Entity to persist
+import com.example.hospimanagmenetapp.data.repo.EhrRepository;
+import com.example.hospimanagmenetapp.domain.ValidatePatientExistsUseCase;
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
 import com.example.hospimanagmenetapp.util.DatePickerUtils;
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 import com.example.hospimanagmenetapp.util.ValidationUtils; // NHS number validator
 
 import java.text.SimpleDateFormat;
@@ -22,6 +24,10 @@ import java.util.concurrent.Executors; // For running DB work off the main threa
 
 public class PatientRegistrationActivity extends AppCompatActivity { // Screen to capture and save a patient
 
+    // Activity for saving patients to the database, with validation to ensure that it is a legal
+    // operation before posting it to the database.
+
+    private EhrRepository ehrRepository;
     private EditText etNhs, etFullName, etDob, etPhone, etEmail; // Form inputs
     private Button btnSave;                                      // Save action
     private final Calendar dobCalendar = Calendar.getInstance();
@@ -29,7 +35,15 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
         super.onCreate(savedInstanceState);
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_patient_registration); // Inflate the registration form layout
+        ehrRepository = new EhrRepository(this);
 
         // Bind views to fields
         etNhs = findViewById(R.id.etNhs);
@@ -71,39 +85,27 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 EncryptionManager encryptionManager = new EncryptionManager();
-
-                // Encrypt the sensitive fields
-                String encryptedName = encryptionManager.encrypt(name);
-                String encryptedDob = encryptionManager.encrypt(dob);
-                String encryptedPhone = encryptionManager.encrypt(phone);
-                String encryptedEmail = encryptionManager.encrypt(email);
-
-                AppDatabase db = AppDatabase.getInstance(getApplicationContext()); // Get the Room singleton
-
-
-                if (db.patientDao().countByNhs(nhs) > 0) {
-                    runOnUiThread(() ->
-                            Toast.makeText(this, "Patient with this NHS number already exists.", Toast.LENGTH_SHORT).show());
-                    return; // Abort insert; duplicate detected
+                if (new ValidatePatientExistsUseCase(this).execute(nhs)) {
+                    runOnUiThread(() -> Toast.makeText(this, "Patient with this NHS number already exists.", Toast.LENGTH_SHORT).show());
+                    return;
                 }
 
-                // Map form inputs to a new Patient entity
                 Patient p = new Patient();
-                p.enPatientNhsNumber = nhs;
-                p.fullName = encryptedName;
-                p.dateOfBirth = encryptedDob;
-                p.phone = encryptedPhone;
-                p.email = encryptedEmail;
-                long now = System.currentTimeMillis(); // Timestamp fields in epoch millis
+                p.enPatientNhsNumber = nhs; // Pass plaintext NHS
+                p.fullName = name;
+                p.dateOfBirth = dob;
+                p.phone = phone;
+                p.email = email;
+                long now = System.currentTimeMillis();
                 p.createdAt = now;
                 p.updatedAt = now;
 
-                db.patientDao().insert(p); // Persist to the local database
+                ehrRepository.savePatient(p);
 
                 // Notify success and close the screen
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Patient saved.", Toast.LENGTH_SHORT).show();
-                    finish(); // Return to the previous screen
+                    finish();
                 });
             } catch (Exception e) {
                 runOnUiThread(() ->

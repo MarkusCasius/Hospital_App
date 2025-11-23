@@ -14,7 +14,8 @@ import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.entities.Vitals;
 import com.example.hospimanagmenetapp.data.repo.EhrRepository;
 import com.example.hospimanagmenetapp.feature.ehr.ui.adapters.VitalsAdapter;
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -34,9 +35,20 @@ public class VitalsActivity extends AppCompatActivity {
     private int pageSize = 5; // Default page size
     private int totalItemCount = 0;
 
+    // Vitals activity which displays the chosen patient's (from Patient Summary) vital history
+    // using pages (currently set to 5 per page).
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_vitals);
         ehrRepository = new EhrRepository(this);
         patientNhsNumber = getIntent().getStringExtra("nhsNumber");
@@ -136,7 +148,8 @@ public class VitalsActivity extends AppCompatActivity {
         int recyclerViewHeight = rvVitalsHistory.getHeight();
         if(recyclerViewHeight <= 0) return 10; // Fallback
 
-        return (int) Math.floor((double) recyclerViewHeight / itemHeight);
+        // return (int) Math.floor((double) recyclerViewHeight / itemHeight);
+        return 5; // Testing purposes
     }
 
     private void saveVitals() {

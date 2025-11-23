@@ -12,8 +12,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
 
+    // The Api client oversees the creation of the API's and allows them to be called by the
+    // repositories, along with initialising the mock interceptor and retrofit.
+
+
     private final AppointmentApi appointmentApi;
     private final EhrApi ehrApi;
+    private final StaffApi staffApi;
 
     public ApiClient(Context ctx) {
         HttpLoggingInterceptor log = new HttpLoggingInterceptor();
@@ -34,6 +39,7 @@ public class ApiClient {
 
         appointmentApi = retrofit.create(AppointmentApi.class);
         ehrApi = retrofit.create(EhrApi.class);
+        staffApi = retrofit.create(StaffApi.class);
     }
 
     public AppointmentApi appointmentApi() {
@@ -41,4 +47,5 @@ public class ApiClient {
     }
 
     public EhrApi ehrApi() {return ehrApi;}
+    public StaffApi staffApi() {return staffApi;}
 }

@@ -20,15 +20,18 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.hospimanagmenetapp.R;
-import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
+import com.example.hospimanagmenetapp.data.entities.Clinic;
 import com.example.hospimanagmenetapp.data.entities.Staff;
+import com.example.hospimanagmenetapp.data.repo.StaffRepository;
 import com.example.hospimanagmenetapp.domain.BookOrRescheduleAppointmentUseCase;
 import com.example.hospimanagmenetapp.domain.DetectScheduleConflictsUseCase;
+import com.example.hospimanagmenetapp.domain.GetClinicsUseCase;
 import com.example.hospimanagmenetapp.domain.ValidatePatientExistsUseCase;
 import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
 import com.example.hospimanagmenetapp.util.DatePickerUtils;
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
+import com.example.hospimanagmenetapp.security.RateLimiter;
 import com.example.hospimanagmenetapp.util.TimePickerUtils;
 
 
@@ -42,14 +45,8 @@ import java.util.stream.Collectors;
 
 public class BookingFragment extends Fragment {
 
-    private static final String ARG_CLINICIAN_ID = "clinicianId";
-    private static final String ARG_CLINICIAN_NAME = "clinicianName";
-    private static final String ARG_PATIENT_NHS = "patientNhs";
-    private static final String ARG_START = "start";
-    private static final String ARG_END = "end";
-    private static final String ARG_CLINIC = "clinic";
-    private static final String ARG_APPOINTMENT = "appointment";
-
+    // Allows users to book and edit appointments, with levels of validation ensuring that there
+    // isn't any conflicts.
 
     public static BookingFragment newInstance(Appointment a) {
         BookingFragment fragment = new BookingFragment();
@@ -67,7 +64,6 @@ public class BookingFragment extends Fragment {
 
     private EditText etStart, etEnd, etNhs;
     private Spinner spinnerClinic, spinnerClinician, spinnerExpertiseFilter, spinnerStatus;
-    private Button btnConfirm;
 
     private final Calendar startCalendar = Calendar.getInstance();
     private final Calendar endCalendar = Calendar.getInstance();
@@ -75,11 +71,19 @@ public class BookingFragment extends Fragment {
 
     private List<Staff> availableClinicians = new ArrayList<>();
     private List<Staff> allClinicians = new ArrayList<>();
+    private List<Clinic> availableClinicsList = new ArrayList<>(); // To store clinic objects
     private ArrayAdapter<String> clinicianAdapter;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        if (!RbacPolicyEvaluator.canBookOrReschedule(requireContext())) {
+            Toast.makeText(getContext(), "Access denied. Not permitted to make booking", Toast.LENGTH_LONG).show();
+            requireActivity().getSupportFragmentManager().popBackStack();
+            return null;
+        }
+
         View v = inflater.inflate(R.layout.fragment_booking, container, false);
 
         spinnerClinic = v.findViewById(R.id.spinnerClinicBooking);
@@ -89,7 +93,7 @@ public class BookingFragment extends Fragment {
         etNhs = v.findViewById(R.id.etNhsBooking);
         etStart = v.findViewById(R.id.etStartMillis);
         etEnd = v.findViewById(R.id.etEndMillis);
-        btnConfirm = v.findViewById(R.id.btnConfirmBooking);
+        Button btnConfirm = v.findViewById(R.id.btnConfirmBooking);
 
         dateTimeFormatter = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.UK);
 
@@ -123,9 +127,9 @@ public class BookingFragment extends Fragment {
     private void setupSpinners() {
         // Setup Clinic Spinner
         ArrayAdapter<String> clinicAdapter = new ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"North Clinic", "South Clinic"});
+                android.R.layout.simple_spinner_dropdown_item);
         spinnerClinic.setAdapter(clinicAdapter);
+        loadClinicsForBooking();
 
         // Setup Clinician Spinner
         clinicianAdapter = new ArrayAdapter<>(requireContext(),
@@ -159,11 +163,33 @@ public class BookingFragment extends Fragment {
         spinnerStatus.setAdapter(statusAdapter);
     }
 
+    private void loadClinicsForBooking() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                availableClinicsList = new GetClinicsUseCase(requireContext()).execute();
+                List<String> clinicNames = availableClinicsList.stream()
+                        .map(c -> c.name)
+                        .collect(Collectors.toList());
+
+                requireActivity().runOnUiThread(() -> {
+                    ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinnerClinic.getAdapter();
+                    adapter.clear();
+                    adapter.addAll(clinicNames);
+                    adapter.notifyDataSetChanged();
+                    // After loading clinics, populate other data
+                    populateInitialData();
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load clinics for booking", e);
+            }
+        });
+    }
+
     private void loadAllCliniciansFromDb() {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                AppDatabase db = AppDatabase.getInstance(requireContext());
-                List<Staff> encryptedClinicians = db.staffDao().getClinicians();
+                StaffRepository staffRepo = new StaffRepository(requireContext());
+                List<Staff> encryptedClinicians = staffRepo.getAndCacheClinicians();
 
                 // Decrypt all clinicians and store them in a master list
                 allClinicians.clear();
@@ -173,7 +199,6 @@ public class BookingFragment extends Fragment {
 
                 requireActivity().runOnUiThread(() -> {
                     updateClinicianSpinner(); // Update the spinner with the initial (unfiltered) list
-                    populateInitialData(); // Now populate fields after data is loaded
                 });
 
 
@@ -283,6 +308,12 @@ public class BookingFragment extends Fragment {
             return;
         }
 
+        RateLimiter rateLimiter = new RateLimiter(requireContext());
+        if (!rateLimiter.isAttemptAllowed()) {
+            Toast.makeText(getContext(), "You have made too many bookings recently. Please try again later.", Toast.LENGTH_LONG).show();
+            return; // Stop the booking process
+        }
+
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
@@ -319,6 +350,8 @@ public class BookingFragment extends Fragment {
                 Appointment encryptedAppointment = EncryptionManager.encryptAppointment(appointmentToSave);
 
                 new BookOrRescheduleAppointmentUseCase(requireContext()).execute(encryptedAppointment);
+
+                rateLimiter.recordNewAttempt();
 
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(getContext(), "Appointment confirmed.", Toast.LENGTH_LONG).show();

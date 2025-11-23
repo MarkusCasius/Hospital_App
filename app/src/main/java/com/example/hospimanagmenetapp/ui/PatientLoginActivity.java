@@ -13,26 +13,36 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.Patient;
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 import com.example.hospimanagmenetapp.util.SessionManager;
 
 import java.util.concurrent.Executors;
 
 public class PatientLoginActivity extends AppCompatActivity {
 
+    // Activity used for logging in patients, but has since been neglected for developing
+    // other features.
+
     private static final String TAG = "PatientLoginActivity";
     private EditText NhsNumber;
     private EditText Email;
-    private Button btnLogin;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_patient_login);
 
         NhsNumber = findViewById(R.id.etPatientNhsNumber);
         Email = findViewById(R.id.etPatientEmail);
-        btnLogin = findViewById(R.id.btnPatientLogin);
+        Button btnLogin = findViewById(R.id.btnPatientLogin);
 
         btnLogin.setOnClickListener(v -> attemptLogin());
     }

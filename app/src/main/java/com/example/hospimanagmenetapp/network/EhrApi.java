@@ -1,6 +1,7 @@
 package com.example.hospimanagmenetapp.network;
 
 import com.example.hospimanagmenetapp.network.dto.ClinicalRecordDto;
+import com.example.hospimanagmenetapp.network.dto.PatientDto;
 import com.example.hospimanagmenetapp.network.dto.VitalsDto;
 import java.util.List;
 import retrofit2.Call;
@@ -17,6 +18,15 @@ public interface EhrApi {
     @POST("ehr/updateOrCreate")
     Call<ClinicalRecordDto> updateorcreateRecord(@Body ClinicalRecordDto request);
 
-    @POST("ehr/vitals")
+    @POST("ehr/vitalsPost")
     Call<Void> uploadVitals(@Body VitalsDto vitals);
+
+    @GET("ehr/vitals")
+    Call<List<VitalsDto>> getVitals(@Query("enPatientNhs") String patientNhs);
+
+    @GET("patients")
+    Call<List<PatientDto>> getAllPatients();
+
+    @POST("patientPost")
+    Call<Void> savePatient(@Body PatientDto patient);
 }

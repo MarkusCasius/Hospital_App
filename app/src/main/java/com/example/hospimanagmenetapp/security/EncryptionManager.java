@@ -1,4 +1,4 @@
-package com.example.hospimanagmenetapp.util;
+package com.example.hospimanagmenetapp.security;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;

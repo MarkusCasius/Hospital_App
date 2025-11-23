@@ -14,7 +14,8 @@ import com.example.hospimanagmenetapp.R;                     // Resource referen
 import com.example.hospimanagmenetapp.data.AppDatabase;      // Room database singleton
 import com.example.hospimanagmenetapp.data.dao.StaffDao;
 import com.example.hospimanagmenetapp.data.entities.Staff;   // Staff entity (contains role and PIN)
-import com.example.hospimanagmenetapp.util.EncryptionManager;
+import com.example.hospimanagmenetapp.security.RuntimeGuard;
+import com.example.hospimanagmenetapp.security.EncryptionManager;
 import com.example.hospimanagmenetapp.util.SessionManager;   // Simple session storage (SharedPreferences)
 
 import java.util.List;
@@ -28,6 +29,13 @@ public class AdminLoginActivity extends AppCompatActivity { // Screen for admin 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Called when the Activity is created
         super.onCreate(savedInstanceState);
+
+        if (RuntimeGuard.isEnvironmentUnsafe()) {
+            Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_admin_login); // Inflate the admin login layout
 
         // Bind views

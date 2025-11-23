@@ -12,6 +12,7 @@ public class BookOrRescheduleAppointmentUseCase {
         this.repo = new AppointmentRepository(ctx);
     }
 
+    // Domain for booking/rescheduling an appointment.
     public Appointment execute(Appointment appt) throws Exception {
         return repo.bookOrReschedule(appt);
     }
