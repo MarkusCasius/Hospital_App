@@ -10,4 +10,3 @@ public class AppointmentDto {
     public String clinic;
     public String status;
 }
-

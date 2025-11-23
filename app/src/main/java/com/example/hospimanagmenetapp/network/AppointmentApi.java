@@ -16,3 +16,4 @@ public interface AppointmentApi {
     @POST("appointments/bookOrReschedule")
     Call<AppointmentDto> bookOrReschedule(@Body AppointmentDto request);
 }
+

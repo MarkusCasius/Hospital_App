@@ -9,11 +9,15 @@ import android.widget.Button;   // UI widget: Button
 import android.widget.EditText; // UI widget: text input
 import android.widget.Toast;    // Lightweight on-screen notifications
 
+import com.example.hospimanagmenetapp.MainActivity;
 import com.example.hospimanagmenetapp.R;                     // Resource references (layouts, IDs, strings)
 import com.example.hospimanagmenetapp.data.AppDatabase;      // Room database singleton
+import com.example.hospimanagmenetapp.data.dao.StaffDao;
 import com.example.hospimanagmenetapp.data.entities.Staff;   // Staff entity (contains role and PIN)
+import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.example.hospimanagmenetapp.util.SessionManager;   // Simple session storage (SharedPreferences)
 
+import java.util.List;
 import java.util.concurrent.Executors; // Run DB work off the main thread
 
 public class AdminLoginActivity extends AppCompatActivity { // Screen for admin authentication
@@ -61,24 +65,77 @@ public class AdminLoginActivity extends AppCompatActivity { // Screen for admin 
         String pin = etPin.getText().toString().trim();     // Read/trim PIN
 
         // Basic required-field checks
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(pin)) {
-            Toast.makeText(this, "Email and PIN are required.", Toast.LENGTH_SHORT).show();
-            return; // Don’t proceed without both fields
+        if (TextUtils.isEmpty(email)) {
+            Toast.makeText(this, "Email are required.", Toast.LENGTH_SHORT).show();
+            return; // Don’t proceed without field
         }
 
         // Run the lookup off the main thread (Room requirement / UI responsiveness)
         Executors.newSingleThreadExecutor().execute(() -> {
-            Staff s = AppDatabase.getInstance(getApplicationContext()).staffDao().findByEmail(email); // Fetch staff by email
-            // Validate: must exist, be ADMIN role, have a stored PIN, and it must match
-            if (s == null || s.role != Staff.Role.ADMIN || s.adminPin == null || !s.adminPin.equals(pin)) {
-                runOnUiThread(() -> Toast.makeText(this, "Invalid admin credentials.", Toast.LENGTH_SHORT).show()); // Show error on UI thread
-            } else {
-                // Persist session details and proceed into the Admin Portal
-                SessionManager.setCurrentUser(this, "ADMIN", s.email); // Store role/email for later checks
-                Intent i = new Intent(this, AdminPortalActivity.class); // Navigate to the portal proper
-                startActivity(i);
-                finish(); // Close login screen after success
-            }
+            try {
+                StaffDao dao = AppDatabase.getInstance(getApplicationContext()).staffDao();
+                EncryptionManager encryptionManager = new EncryptionManager();
+                // Fetch ALL staff members from the database.
+                List<Staff> allStaff = dao.getAll();
+                Staff matchedStaff = null;
+                boolean isAdmin = false;
+
+                // Loop through each staff member to find a match.
+                for (Staff staff : allStaff) {
+                    String decryptedEmail = null;
+                    try {
+                        // Decrypt the email for comparison.
+                        decryptedEmail = encryptionManager.decrypt(staff.email);
+                    } catch (Exception e) {
+                        continue; // Skip this record if decryption fails
+                    }
+                    if (staff.role == Staff.Role.ADMIN) {
+                        // If emails match, check the PIN.
+                        if (email.equals(decryptedEmail)) {
+                            String decryptedPin = encryptionManager.decrypt(staff.adminPin);
+                            if(pin.equals(decryptedPin)) {
+                                matchedStaff = staff; // Found our user!
+                                matchedStaff.email = decryptedEmail; // Store the plaintext email for the session
+                                isAdmin = true;
+                                break; // Exit the loop
+                            }
+                        }
+                    } else if (staff.role == Staff.Role.CLINICIAN || staff.role == Staff.Role.RECEPTION) {
+                        if (email.equals(decryptedEmail)) {
+                            matchedStaff = staff;
+                            matchedStaff.email = decryptedEmail;
+                            break;
+                        }
+                    }
+                }
+
+                // Check if we found a matching admin.
+                if (matchedStaff == null) {
+                    runOnUiThread(() -> Toast.makeText(this, "Invalid admin credentials.", Toast.LENGTH_SHORT).show()); // Show error on UI thread
+                } else if (isAdmin) {
+                    // Persist session details and proceed into the Admin Portal
+                    final Staff finalAdmin = matchedStaff;
+                    runOnUiThread(() -> {
+                        // Use the plaintext email for the session
+                        SessionManager.setCurrentUser(this, "ADMIN", finalAdmin.email);
+                        Intent i = new Intent(this, AdminPortalActivity.class); // Navigate to the portal proper
+                        startActivity(i);
+                        finish(); // Close login screen after success
+                    });
+                } else {
+                    final Staff finalStaff = matchedStaff;
+                    runOnUiThread(() -> {
+                        SessionManager.setCurrentUser(this, String.valueOf(finalStaff.role), finalStaff.email);
+                        Intent i = new Intent(this, MainActivity.class);
+                        startActivity(i);
+                        finish();
+                    });
+                }
+            } catch (Exception e) {
+            // If decryption or database access fails, show an error
+            runOnUiThread(() ->
+                    Toast.makeText(this, "Failed to load and decrypt staff data.", Toast.LENGTH_LONG).show());
+        }
         });
     }
 }

@@ -13,6 +13,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiClient {
 
     private final AppointmentApi appointmentApi;
+    private final EhrApi ehrApi;
 
     public ApiClient(Context ctx) {
         HttpLoggingInterceptor log = new HttpLoggingInterceptor();
@@ -32,9 +33,12 @@ public class ApiClient {
                 .build();
 
         appointmentApi = retrofit.create(AppointmentApi.class);
+        ehrApi = retrofit.create(EhrApi.class);
     }
 
     public AppointmentApi appointmentApi() {
         return appointmentApi;
     }
+
+    public EhrApi ehrApi() {return ehrApi;}
 }

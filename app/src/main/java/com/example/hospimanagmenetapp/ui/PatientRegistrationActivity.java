@@ -11,14 +11,20 @@ import android.widget.Toast;     // Lightweight user notifications
 import com.example.hospimanagmenetapp.R;                    // Resource IDs (layouts, strings, etc.)
 import com.example.hospimanagmenetapp.data.AppDatabase;     // Room database singleton
 import com.example.hospimanagmenetapp.data.entities.Patient; // Entity to persist
+import com.example.hospimanagmenetapp.util.DatePickerUtils;
+import com.example.hospimanagmenetapp.util.EncryptionManager;
 import com.example.hospimanagmenetapp.util.ValidationUtils; // NHS number validator
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.Executors; // For running DB work off the main thread
 
 public class PatientRegistrationActivity extends AppCompatActivity { // Screen to capture and save a patient
 
     private EditText etNhs, etFullName, etDob, etPhone, etEmail; // Form inputs
     private Button btnSave;                                      // Save action
+    private final Calendar dobCalendar = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
@@ -32,6 +38,10 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
         etPhone = findViewById(R.id.etPhone);
         etEmail = findViewById(R.id.etEmail);
         btnSave = findViewById(R.id.btnSavePatient);
+        etDob.setOnClickListener(v -> DatePickerUtils.showDatePickerDialog(this, dobCalendar, () -> {
+            SimpleDateFormat sdf = new SimpleDateFormat(DatePickerUtils.APP_DATE_FORMAT, Locale.UK);
+            etDob.setText(sdf.format(dobCalendar.getTime()));
+        }));
 
         btnSave.setOnClickListener(v -> savePatient()); // When tapped, validate and persist the patient
     }
@@ -57,12 +67,20 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
             return; // Do not proceed with invalid identifiers
         }
 
-        // Run database I/O off the main thread to keep the UI responsive
+        // Run database
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
+                EncryptionManager encryptionManager = new EncryptionManager();
+
+                // Encrypt the sensitive fields
+                String encryptedName = encryptionManager.encrypt(name);
+                String encryptedDob = encryptionManager.encrypt(dob);
+                String encryptedPhone = encryptionManager.encrypt(phone);
+                String encryptedEmail = encryptionManager.encrypt(email);
+
                 AppDatabase db = AppDatabase.getInstance(getApplicationContext()); // Get the Room singleton
 
-                // Enforce uniqueness by NHS number before inserting
+
                 if (db.patientDao().countByNhs(nhs) > 0) {
                     runOnUiThread(() ->
                             Toast.makeText(this, "Patient with this NHS number already exists.", Toast.LENGTH_SHORT).show());
@@ -71,11 +89,11 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
 
                 // Map form inputs to a new Patient entity
                 Patient p = new Patient();
-                p.nhsNumber = nhs;
-                p.fullName = name;
-                p.dateOfBirth = dob; // Consider normalising/validating format upstream
-                p.phone = phone;
-                p.email = email;
+                p.enPatientNhsNumber = nhs;
+                p.fullName = encryptedName;
+                p.dateOfBirth = encryptedDob;
+                p.phone = encryptedPhone;
+                p.email = encryptedEmail;
                 long now = System.currentTimeMillis(); // Timestamp fields in epoch millis
                 p.createdAt = now;
                 p.updatedAt = now;
@@ -88,7 +106,6 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
                     finish(); // Return to the previous screen
                 });
             } catch (Exception e) {
-                // Generic error path (e.g., SQLite constraint, I/O issues)
                 runOnUiThread(() ->
                         Toast.makeText(this, "Error saving patient.", Toast.LENGTH_SHORT).show());
             }

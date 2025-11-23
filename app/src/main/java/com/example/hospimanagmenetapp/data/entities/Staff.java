@@ -6,6 +6,8 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverter;
 
+import org.checkerframework.common.aliasing.qual.Unique;
+
 @Entity(tableName = "staff", indices = @Index(value = "email", unique = true))
 public class Staff {
 
@@ -13,18 +15,7 @@ public class Staff {
 
     @PrimaryKey(autoGenerate = true) public long id;
     public String fullName;
-    @NonNull public String email;
+    @NonNull @Unique public String email;
     @NonNull public Role role;
     public String adminPin; // only for ADMIN
-
-    // ----- Inline converters (no new class) -----
-    @TypeConverter
-    public static String fromRole(Role role) {
-        return role == null ? null : role.name();
-    }
-
-    @TypeConverter
-    public static Role toRole(String value) {
-        return value == null ? null : Role.valueOf(value);
-    }
 }

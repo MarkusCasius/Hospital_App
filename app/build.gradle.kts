@@ -11,7 +11,12 @@ android { // Android-specific build configuration for the app module
         versionCode = 1 // Internal version (integer) used for updates
         versionName = "1.0" // Human-readable version shown to users
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" // Runner for instrumented (device) tests
+        vectorDrawables.useSupportLibrary = true
     }
+    testOptions {
+        animationsDisabled = true
+    }
+
 
     buildTypes { // Definitions of build variants like debug/release
         release { // Settings for the release (shipping) build
@@ -43,19 +48,14 @@ dependencies { // Libraries this module depends on
     implementation("androidx.recyclerview:recyclerview:1.3.2") // RecyclerView for efficient scrolling lists/grids
 
     // Room (Java -> annotationProcessor)
-    implementation("androidx.room:room-runtime:2.6.1") // Room runtime for SQLite ORM
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation(libs.espresso.contrib) // Room runtime for SQLite ORM
     annotationProcessor("androidx.room:room-compiler:2.6.1") // Annotation processor generating Room DAOs/entities
 
     // Lifecycle (already had runtime + livedata) + ViewModel for Lab 2
     implementation("androidx.lifecycle:lifecycle-runtime:2.8.6") // Lifecycle-aware components base runtime
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.6") // LiveData for observable data holders
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.6") // ViewModel for UI-related state
-
-    // Retrofit / OkHttp (mock + logging)
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // SQLCipher (Lab 1 basic-at-rest security placeholder)
     implementation("net.zetetic:android-database-sqlcipher:4.5.4") // Encrypted SQLite via SQLCipher
@@ -73,7 +73,9 @@ dependencies { // Libraries this module depends on
     // --- Lab 3 ---
     // Paging
     implementation("androidx.paging:paging-runtime:3.3.2")
+    implementation("androidx.room:room-paging")
     // WorkManager (offline queue)
+    implementation("com.google.guava:guava:33.2.1-android")
     implementation("androidx.work:work-runtime:2.9.1")
     // Barcode scanning (ZXing)
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
@@ -85,5 +87,12 @@ dependencies { // Libraries this module depends on
     testImplementation(libs.junit) // JUnit 4 for local unit tests
     androidTestImplementation(libs.ext.junit) // AndroidX JUnit extensions for instrumented tests
     androidTestImplementation(libs.espresso.core) // Espresso UI testing framework
+
+    // For testing Room
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
+
+    // For Activity testing
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
 
 }

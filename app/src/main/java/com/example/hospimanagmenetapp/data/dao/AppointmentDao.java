@@ -9,12 +9,12 @@ import androidx.room.Update;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
 
 import java.util.List;
-import androidx.room.Transaction;
+
 @Dao
 public interface AppointmentDao {
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    long upsert(Appointment appt);
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    long insert(Appointment appt);
 
     @Update
     int update(Appointment appt);
@@ -26,10 +26,12 @@ public interface AppointmentDao {
             + "( (startTime < :newEnd AND endTime > :newStart) )")
     List<Appointment> overlapping(long clinicianId, long newStart, long newEnd);
 
-    @Query("SELECT * FROM appointments WHERE clinic = :clinic AND startTime >= :start AND startTime < :end")
-    List<Appointment> getAppointmentsByClinicBetween(String clinic, long start, long end);
+    @Query("SELECT * FROM appointments WHERE enPatientNhsNumber = :nhsNumber ORDER BY startTime DESC")
+    List<Appointment> getAppointmentsForPatient(String nhsNumber);
 
-    @Query("SELECT * FROM appointments WHERE startTime >= :start AND startTime < :end")
-    List<Appointment> getAllAppointmentsBetween(long start, long end);
+    @Query("SELECT * FROM appointments ORDER BY startTime DESC")
+    List<Appointment> getAllAppointments();
 
+    @Query("SELECT * FROM appointments WHERE clinic = :clinic ORDER BY startTime DESC")
+    List<Appointment> getAppointmentsByClinic(String clinic);
 }

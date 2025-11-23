@@ -28,4 +28,3 @@ public class GetTodaysAppointmentsUseCase {
         return repo.getTodaysAppointments(clinic, start, end);
     }
 }
-

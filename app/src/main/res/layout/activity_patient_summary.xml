@@ -3,13 +3,66 @@
     android:orientation="vertical" android:padding="16dp"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <TextView android:id="@+id/tvPatientHeader" android:textStyle="bold" android:textSize="18sp"  android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-    <TextView android:id="@+id/tvProblems" android:text="Problems:" android:textSize="16sp"  android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-    <TextView android:id="@+id/tvAllergies" android:text="Allergies:" android:textSize="16sp"  android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-    <TextView android:id="@+id/tvMedications" android:text="Medications:" android:textSize="16sp"  android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Patient:"
+        android:labelFor="@+id/spPatients"/>
+    <Spinner
+        android:id="@+id/spPatients"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView android:id="@+id/tvPatientHeader" android:textStyle="bold" android:textSize="18sp" android:layout_height="wrap_content" android:layout_width="match_parent" android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Problems" />
+    <EditText
+        android:id="@+id/etProblems"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Known medical problems"
+        android:inputType="textMultiLine"
+        android:minLines="2" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Allergies" />
+    <EditText
+        android:id="@+id/etAllergies"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Known allergies"
+        android:inputType="textMultiLine"
+        android:minLines="2" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Medications" />
+    <EditText
+        android:id="@+id/etMedications"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Current medications"
+        android:inputType="textMultiLine"
+        android:minLines="2" />
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Save Clinical Record" />
 
     <Button android:id="@+id/btnRecordVitals"
         android:text="Record Vitals"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_width="match_parent" android:layout_height="wrap_content"/>
 </LinearLayout>
