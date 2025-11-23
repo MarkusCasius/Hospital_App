@@ -61,6 +61,7 @@ public class DatabaseSeeder {
         admin.email = encryptionManager.encrypt("admin@hospital.com");
         admin.role = Staff.Role.ADMIN;
         admin.adminPin = encryptionManager.encrypt("1234"); // Encrypt the PIN
+        admin.expertise = null;
         db.staffDao().insert(admin);
 
         // Clinicians
@@ -68,12 +69,14 @@ public class DatabaseSeeder {
         clinician1.fullName = encryptionManager.encrypt("Dr. Emily Carter");
         clinician1.email = encryptionManager.encrypt("emily.carter@hospital.com");
         clinician1.role = Staff.Role.CLINICIAN;
+        clinician1.expertise = Staff.Expertise.GP;
         db.staffDao().insert(clinician1);
 
         Staff clinician2 = new Staff();
         clinician2.fullName = encryptionManager.encrypt("Dr. Ben Richards");
         clinician2.email = encryptionManager.encrypt("ben.richards@hospital.com");
         clinician2.role = Staff.Role.CLINICIAN;
+        clinician2.expertise = Staff.Expertise.SURGEON;
         db.staffDao().insert(clinician2);
 
         // Reception
@@ -81,6 +84,7 @@ public class DatabaseSeeder {
         reception.fullName = encryptionManager.encrypt("Sarah Jenkins");
         reception.email = encryptionManager.encrypt("reception@hospital.com");
         reception.role = Staff.Role.RECEPTION;
+        reception.expertise = null;
         db.staffDao().insert(reception);
         Log.d(TAG, "Staff seeding complete.");
     }

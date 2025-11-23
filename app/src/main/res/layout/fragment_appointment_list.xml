@@ -17,6 +17,13 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"/>
 
+        <Spinner
+            android:id="@+id/spDateFilter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"/>
+
         <Button
             android:id="@+id/btnRefresh"
             android:text="Refresh"

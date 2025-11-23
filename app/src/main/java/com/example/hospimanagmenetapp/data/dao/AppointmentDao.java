@@ -19,8 +19,24 @@ public interface AppointmentDao {
     @Update
     int update(Appointment appt);
 
-    @Query("SELECT * FROM appointments WHERE startTime BETWEEN :start AND :end ORDER BY startTime ASC")
-    List<Appointment> findBetween(long start, long end);
+    @Query("SELECT * FROM appointments WHERE (:clinic IS NULL OR clinic = :clinic) ORDER BY startTime ASC")
+    List<Appointment> getAllAppointmentsForClinic(String clinic);
+
+    @Query("SELECT * FROM appointments WHERE (:clinic IS NULL OR clinic = :clinic) AND startTime >= :startTime AND startTime < :endTime ORDER BY startTime ASC")
+    List<Appointment> getAppointmentsForClinicBetween(String clinic, long startTime, long endTime);
+
+    @Query("SELECT * FROM appointments WHERE (:clinic IS NULL OR clinic = :clinic) AND startTime < :endTime ORDER BY startTime DESC")
+    List<Appointment> getAppointmentsForClinicBefore(String clinic, long endTime);
+
+    @Query("SELECT * FROM appointments WHERE (:clinic IS NULL OR clinic = :clinic) AND startTime >= :startTime ORDER BY startTime ASC")
+    List<Appointment> getAppointmentsForClinicAfter(String clinic, long startTime);
+
+    @Query("SELECT * FROM appointments WHERE clinicianId = :clinicianId " +
+            "AND id != :appointmentIdToIgnore " +
+            "AND status = 'BOOKED' " +
+            "AND ((startTime < :newEndTime AND endTime > :newStartTime))")
+    List<Appointment> getConflictingAppointments(long clinicianId, long newStartTime, long newEndTime, long appointmentIdToIgnore);
+
 
     @Query("SELECT * FROM appointments WHERE clinicianId = :clinicianId AND "
             + "( (startTime < :newEnd AND endTime > :newStart) )")

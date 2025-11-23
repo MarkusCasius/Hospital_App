@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,6 +25,7 @@ import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.data.entities.Staff;
 import com.example.hospimanagmenetapp.domain.BookOrRescheduleAppointmentUseCase;
 import com.example.hospimanagmenetapp.domain.DetectScheduleConflictsUseCase;
+import com.example.hospimanagmenetapp.domain.ValidatePatientExistsUseCase;
 import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
 import com.example.hospimanagmenetapp.util.DatePickerUtils;
 import com.example.hospimanagmenetapp.util.EncryptionManager;
@@ -36,6 +38,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class BookingFragment extends Fragment {
 
@@ -63,7 +66,7 @@ public class BookingFragment extends Fragment {
 
 
     private EditText etStart, etEnd, etNhs;
-    private Spinner spinnerClinic, spinnerClinician;
+    private Spinner spinnerClinic, spinnerClinician, spinnerExpertiseFilter, spinnerStatus;
     private Button btnConfirm;
 
     private final Calendar startCalendar = Calendar.getInstance();
@@ -71,6 +74,7 @@ public class BookingFragment extends Fragment {
     private SimpleDateFormat dateTimeFormatter;
 
     private List<Staff> availableClinicians = new ArrayList<>();
+    private List<Staff> allClinicians = new ArrayList<>();
     private ArrayAdapter<String> clinicianAdapter;
 
     @Nullable
@@ -80,6 +84,8 @@ public class BookingFragment extends Fragment {
 
         spinnerClinic = v.findViewById(R.id.spinnerClinicBooking);
         spinnerClinician = v.findViewById(R.id.spinnerClinicianBooking);
+        spinnerExpertiseFilter = v.findViewById(R.id.spinnerExpertiseFilter);
+        spinnerStatus = v.findViewById(R.id.spinnerStatus);
         etNhs = v.findViewById(R.id.etNhsBooking);
         etStart = v.findViewById(R.id.etStartMillis);
         etEnd = v.findViewById(R.id.etEndMillis);
@@ -88,7 +94,7 @@ public class BookingFragment extends Fragment {
         dateTimeFormatter = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.UK);
 
         setupSpinners();
-        loadCliniciansFromDb();
+        loadAllCliniciansFromDb();
         setupDateTimePickers();
 
         btnConfirm.setOnClickListener(v1 -> confirm());
@@ -125,40 +131,51 @@ public class BookingFragment extends Fragment {
         clinicianAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_dropdown_item, new ArrayList<>());
         spinnerClinician.setAdapter(clinicianAdapter);
+
+        // Setup Expertise Filter Spinner
+        List<String> expertiseFilterOptions = new ArrayList<>();
+        expertiseFilterOptions.add("All Expertise");
+        for (Staff.Expertise expertise : Staff.Expertise.values()) {
+            expertiseFilterOptions.add(expertise.name());
+        }
+        ArrayAdapter<String> expertiseAdapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item, expertiseFilterOptions);
+        spinnerExpertiseFilter.setAdapter(expertiseAdapter);
+
+        // Listener to update clinician list when expertise is selected
+        spinnerExpertiseFilter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateClinicianSpinner();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // Setup Status Spinner
+        ArrayAdapter<String> statusAdapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"BOOKED", "CANCELLED", "COMPLETED"});
+        spinnerStatus.setAdapter(statusAdapter);
     }
 
-    private void loadCliniciansFromDb() {
+    private void loadAllCliniciansFromDb() {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 AppDatabase db = AppDatabase.getInstance(requireContext());
                 List<Staff> encryptedClinicians = db.staffDao().getClinicians();
-                EncryptionManager encryptionManager = new EncryptionManager();
-                List<Staff> decryptedClinicians = new ArrayList<>();
-                List<String> clinicianNames = new ArrayList<>();
 
+                // Decrypt all clinicians and store them in a master list
+                allClinicians.clear();
                 for (Staff encryptedStaff : encryptedClinicians) {
-                    try {
-                        String decryptedName = encryptionManager.decrypt(encryptedStaff.fullName);
-                        Staff decryptedStaff = new Staff();
-                        decryptedStaff.id = encryptedStaff.id;
-                        decryptedStaff.fullName = decryptedName;
-                        decryptedStaff.email = encryptionManager.decrypt(encryptedStaff.email);
-                        decryptedStaff.role = encryptedStaff.role;
-
-                        decryptedClinicians.add(decryptedStaff);
-                        clinicianNames.add(decryptedName);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Failed to decrypt clinician: " + encryptedStaff.id, e);
-                    }
+                    allClinicians.add(EncryptionManager.decryptStaff(encryptedStaff));
                 }
-                availableClinicians = decryptedClinicians;
 
                 requireActivity().runOnUiThread(() -> {
-                    clinicianAdapter.clear();
-                    clinicianAdapter.addAll(clinicianNames);
-                    clinicianAdapter.notifyDataSetChanged();
+                    updateClinicianSpinner(); // Update the spinner with the initial (unfiltered) list
                     populateInitialData(); // Now populate fields after data is loaded
                 });
+
 
             } catch (Exception e) {
                 Log.e(TAG, "Failed to load clinicians from DB", e);
@@ -166,6 +183,31 @@ public class BookingFragment extends Fragment {
                         Toast.makeText(getContext(), "Error loading clinicians.", Toast.LENGTH_SHORT).show());
             }
         });
+    }
+
+    private void updateClinicianSpinner() {
+        String selectedExpertiseStr = (String) spinnerExpertiseFilter.getSelectedItem();
+        List<Staff> filteredClinicians;
+
+        // If "All Expertise" is selected, use the master list. Otherwise, filter it.
+        if ("All Expertise".equals(selectedExpertiseStr)) {
+            filteredClinicians = new ArrayList<>(allClinicians);
+        } else {
+            Staff.Expertise selectedExpertise = Staff.Expertise.valueOf(selectedExpertiseStr);
+            filteredClinicians = allClinicians.stream()
+                    .filter(c -> c.expertise == selectedExpertise)
+                    .collect(Collectors.toList());
+        }
+
+        // Update the adapter data for the clinician spinner
+        availableClinicians = filteredClinicians; // Update the list used by `confirm()`
+        List<String> clinicianNames = filteredClinicians.stream()
+                .map(s -> s.fullName)
+                .collect(Collectors.toList());
+
+        clinicianAdapter.clear();
+        clinicianAdapter.addAll(clinicianNames);
+        clinicianAdapter.notifyDataSetChanged();
     }
 
     private void populateInitialData() {
@@ -233,35 +275,50 @@ public class BookingFragment extends Fragment {
         Staff selectedClinician = availableClinicians.get(selectedClinicianPosition);
         long clinicianId = selectedClinician.id;
         String clinicianName = selectedClinician.fullName;
-
-        // Get selected clinic
         String clinic = spinnerClinic.getSelectedItem().toString();
+        String status = spinnerStatus.getSelectedItem().toString();
+
+        if (start < System.currentTimeMillis() && !status.equals("BOOKED")) {
+            Toast.makeText(getContext(), "Cannot book an appointment in the past.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
+                ValidatePatientExistsUseCase validationUseCase = new ValidatePatientExistsUseCase(requireContext());
+                boolean patientExists = validationUseCase.execute(nhs);
+
+                long currentAppointmentId = getArguments().getLong("id", 0);
+
                 // Conflict detection
-                boolean conflict = new DetectScheduleConflictsUseCase(requireContext()).hasConflict(clinicianId, start, end);
+                boolean conflict = new DetectScheduleConflictsUseCase(requireContext()).hasConflict(clinicianId, start, end, currentAppointmentId);
                 if (conflict) {
                     requireActivity().runOnUiThread(() ->
                     Toast.makeText(getContext(), "Time conflict detected. Choose another slot.", Toast.LENGTH_LONG).show());
                     return;
                 }
 
-                // Create an Appointment object and crucially set its ID from the arguments.
-                Appointment appointmentToSave = new Appointment();
-                // getArguments() will contain the ID. If new, it defaults to 0.
-                appointmentToSave.id = getArguments().getLong("id", 0);
+                if (!patientExists) {
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), "Error: No patient found with the provided NHS number.", Toast.LENGTH_LONG).show());
+                    return;
+                }
 
-                // Populate the rest of the details from the UI
-                appointmentToSave.enPatientNhsNumber = nhs;
-                appointmentToSave.clinicianId = clinicianId;
-                appointmentToSave.enClinicianName = clinicianName;
+                Appointment appointmentToSave = new Appointment();
+                appointmentToSave.id = currentAppointmentId;
+                appointmentToSave.id = getArguments().getLong("id", 0);
+                appointmentToSave.enPatientNhsNumber = nhs; // Still plaintext here
                 appointmentToSave.startTime = start;
                 appointmentToSave.endTime = end;
+                appointmentToSave.clinicianId = clinicianId;
+                appointmentToSave.enClinicianName = clinicianName; // Still plaintext here
                 appointmentToSave.clinic = clinic;
-                appointmentToSave.status = "BOOKED";
+                appointmentToSave.status = status;
 
-                new BookOrRescheduleAppointmentUseCase(requireContext()).execute(appointmentToSave);
+                Appointment encryptedAppointment = EncryptionManager.encryptAppointment(appointmentToSave);
+
+                new BookOrRescheduleAppointmentUseCase(requireContext()).execute(encryptedAppointment);
 
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(getContext(), "Appointment confirmed.", Toast.LENGTH_LONG).show();

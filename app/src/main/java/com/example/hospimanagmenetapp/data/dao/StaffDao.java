@@ -28,6 +28,10 @@ public interface StaffDao {
     @Query("SELECT * FROM staff WHERE role = 'CLINICIAN' ORDER BY fullName ASC")
     List<Staff> getClinicians();
 
+
+    @Query(" SELECT * FROM staff WHERE role = :clinicianRole AND expertise = :expertise ORDER BY fullName")
+    List<Staff> getCliniciansByExpertise(Staff.Role clinicianRole, Staff.Expertise expertise);
+
     @Delete
     void delete(Staff staff); // Deletes a staff member based on the provided entity (usually by primary key)
 }

@@ -13,6 +13,12 @@ import android.widget.Button;      // UI widget: Button
 import android.widget.EditText;    // UI widget: text input
 import android.widget.Spinner;     // UI widget: drop-down selection
 import android.widget.Toast;       // Lightweight user notifications
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 
 import com.example.hospimanagmenetapp.R;                     // Resource references (layouts, IDs)
 import com.example.hospimanagmenetapp.data.AppDatabase;      // Room database singleton
@@ -32,7 +38,7 @@ import javax.crypto.EncryptedPrivateKeyInfo;
 public class AdminPortalActivity extends AppCompatActivity { // Admin portal: manage staff accounts
 
     private EditText etName, etEmail, etPin;   // Inputs for staff name/email and admin PIN (if role is ADMIN)
-    private Spinner spRole;                    // Role picker (ADMIN/STAFF/etc.)
+    private Spinner spRole, spExpertise;                    // Role picker (ADMIN/STAFF/etc.)
     private Button btnRegisterStaff, btnRefresh; // Actions to register and refresh the list
     private RecyclerView rvStaff;              // Displays the current staff members
     private static final String TAG = "PatientLoginActivity";
@@ -47,18 +53,40 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
         etEmail = findViewById(R.id.etStaffEmail);
         etPin = findViewById(R.id.etAdminSetupPin);
         spRole = findViewById(R.id.spRole);
+        spExpertise = findViewById(R.id.spExpertise);
         btnRegisterStaff = findViewById(R.id.btnRegisterStaff);
         btnRefresh = findViewById(R.id.btnRefreshList);
         rvStaff = findViewById(R.id.rvStaff);
 
         rvStaff.setLayoutManager(new LinearLayoutManager(this)); // Vertical list for the RecyclerView
 
-        // Populate the role Spinner with all Staff.Role enum values using a simple built-in layout
         spRole.setAdapter(new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_spinner_dropdown_item,
                 Arrays.asList(Staff.Role.values())
         ));
+
+        spExpertise.setAdapter(new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_dropdown_item,
+                Arrays.asList(Staff.Expertise.values())
+        ));
+
+        spRole.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Staff.Role selectedRole = (Staff.Role) parent.getItemAtPosition(position);
+                handleRoleChange(selectedRole);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Hide both conditional fields
+                spExpertise.setVisibility(View.GONE);
+                etPin.setVisibility(View.GONE);
+            }
+        });
+        handleRoleChange((Staff.Role) spRole.getSelectedItem());
 
         // Wire up button actions
         btnRegisterStaff.setOnClickListener(v -> registerStaff()); // Validate inputs and insert staff
@@ -78,12 +106,26 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
         loadStaff(); // Populate list on first load
     }
 
+    private void handleRoleChange(Staff.Role role) {
+        if (role == Staff.Role.CLINICIAN) {
+            spExpertise.setVisibility(View.VISIBLE);
+            etPin.setVisibility(View.GONE);
+        } else if (role == Staff.Role.ADMIN) {
+            spExpertise.setVisibility(View.GONE);
+            etPin.setVisibility(View.VISIBLE);
+        } else {
+            spExpertise.setVisibility(View.GONE);
+            etPin.setVisibility(View.GONE);
+        }
+    }
+
     // Read inputs, validate, and insert a new Staff record (background thread)
     private void registerStaff() {
         String name = etName.getText().toString().trim();     // Staff full name
         String email = etEmail.getText().toString().trim();   // Staff email (should be unique)
         Staff.Role role = (Staff.Role) spRole.getSelectedItem(); // Selected role from Spinner
         String pin = etPin.getText().toString().trim();       // Admin PIN (required only for ADMIN)
+        Staff.Expertise expertise = (Staff.Expertise) spExpertise.getSelectedItem();
 
         // Basic required-field checks
         if (TextUtils.isEmpty(name) || TextUtils.isEmpty(email)) {
@@ -126,6 +168,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
                 s.email = encryptedEmail;
                 s.role = role;
                 s.adminPin = (role == Staff.Role.ADMIN) ? encryptedPin : null; // Store PIN only for admins
+                s.expertise = (role == Staff.Role.CLINICIAN) ? expertise : null; // Store expertise only for clinicians
 
                 dao.insert(s); // Persist to Room (unique constraints may throw)
 
@@ -151,20 +194,10 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
             try {
                 // Fetch all staff from the database
                 List<Staff> encryptedList = AppDatabase.getInstance(getApplicationContext()).staffDao().getAll();
-                EncryptionManager encryptionManager = new EncryptionManager();
                 List<Staff> decryptedList = new ArrayList<>();
 
                 for (Staff encryptedStaff : encryptedList) {
-                    Staff decryptedStaff = new Staff();
-                    decryptedStaff.id = encryptedStaff.id;
-                    decryptedStaff.role = encryptedStaff.role;
-                    decryptedStaff.adminPin = encryptedStaff.adminPin;
-
-                    decryptedStaff.fullName = encryptionManager.decrypt(encryptedStaff.fullName);
-                    decryptedStaff.email = encryptionManager.decrypt(encryptedStaff.email);
-
-
-                    decryptedList.add(decryptedStaff);
+                    decryptedList.add(EncryptionManager.decryptStaff(encryptedStaff));
                 }
 
                 // Pass the list to the adapter on the UI thread
@@ -194,14 +227,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 // Re-encrypt the identifying fields before deleting, as the DAO expects an encrypted object
-                EncryptionManager encryptionManager = new EncryptionManager();
-                Staff staffToDelete = new Staff();
-                staffToDelete.id = staff.id; // The primary key
-                staffToDelete.fullName = encryptionManager.encrypt(staff.fullName);
-                staffToDelete.email = encryptionManager.encrypt(staff.email);
-                staffToDelete.role = staff.role;
-                staffToDelete.adminPin = staff.adminPin != null ? encryptionManager.encrypt(staff.adminPin) : null;
-
+                Staff staffToDelete = EncryptionManager.encryptStaff(staff);
                 AppDatabase.getInstance(getApplicationContext()).staffDao().delete(staffToDelete);
 
                 // On success, show a toast and refresh the list

@@ -51,19 +51,27 @@ public class StaffAdapter extends RecyclerView.Adapter<StaffAdapter.VH> { // Ada
 
     // ViewHolder caches view references for each row to avoid repeated findViewById calls
     static class VH extends RecyclerView.ViewHolder {
-        TextView tvName, tvEmail, tvRole; // Row widgets for name, email, and role
+        TextView tvName, tvEmail, tvRole, tvStaffExpertise; // Row widgets for name, email, and role
 
         VH(@NonNull View itemView) { // Constructed with the inflated row view
             super(itemView);                                  // Pass to base class
             tvName = itemView.findViewById(R.id.tvStaffName); // Bind TextView for name
             tvEmail = itemView.findViewById(R.id.tvStaffEmail); // Bind TextView for email
             tvRole = itemView.findViewById(R.id.tvStaffRole); // Bind TextView for role
+            tvStaffExpertise = itemView.findViewById(R.id.tvStaffExpertise);
         }
 
         void bind(final Staff staff, final OnStaffClickListener listener) {
             tvName.setText(staff.fullName);     // Show staff member’s name
             tvEmail.setText(staff.email);       // Show staff member’s email
             tvRole.setText(staff.role.name());  // Show role (enum name as text)
+
+            if (staff.role == Staff.Role.CLINICIAN && staff.expertise != null) {
+                tvStaffExpertise.setVisibility(View.VISIBLE);
+                tvStaffExpertise.setText(staff.expertise.name());
+            } else {
+                tvStaffExpertise.setVisibility(View.GONE);
+            }
 
             // Set the listener on the entire row view
             itemView.setOnClickListener(v -> listener.onStaffClick(staff));

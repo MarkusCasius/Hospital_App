@@ -96,8 +96,8 @@ public class AppointmentRepository {
         }
     }
 
-    public List<Appointment> detectConflicts(long clinicianId, long start, long end) {
-        return dao.overlapping(clinicianId, start, end);
+    public List<Appointment> detectConflicts(long clinicianId, long start, long end, long appointmentId) {
+        return dao.getConflictingAppointments(clinicianId, start, end, appointmentId);
     }
 
     private Appointment map(AppointmentDto dto) {

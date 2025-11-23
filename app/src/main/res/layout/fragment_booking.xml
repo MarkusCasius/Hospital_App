@@ -24,6 +24,18 @@
         android:layout_height="48dp"
         android:layout_marginBottom="16dp"/>
 
+    <!-- Clinician Expertise Filter -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Filter by Expertise"
+        android:labelFor="@id/spinnerExpertiseFilter"/>
+    <Spinner
+        android:id="@+id/spinnerExpertiseFilter"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"/>
+
     <!-- Spinner for Clinician Selection -->
     <TextView
         android:layout_width="wrap_content"
@@ -78,6 +90,16 @@
         android:hint="Select date and time"
         android:focusable="false"
         android:clickable="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Appointment Status"
+        android:layout_marginTop="16dp"/>
+    <Spinner
+        android:id="@+id/spinnerStatus"
+        android:layout_width="match_parent"
+        android:layout_height="48dp" />
 
     <Button
         android:id="@+id/btnConfirmBooking"

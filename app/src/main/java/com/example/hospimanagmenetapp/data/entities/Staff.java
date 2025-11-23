@@ -13,9 +13,12 @@ public class Staff {
 
     public enum Role { ADMIN, CLINICIAN, RECEPTION }
 
+    public enum Expertise { GP, PHYSICIAN, THERAPIST, NURSE, SURGEON }
+
     @PrimaryKey(autoGenerate = true) public long id;
     public String fullName;
-    @NonNull @Unique public String email;
+    @NonNull public String email;
     @NonNull public Role role;
     public String adminPin; // only for ADMIN
+    public Expertise expertise; // only for CLINICIAN
 }

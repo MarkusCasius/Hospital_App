@@ -6,6 +6,7 @@ import android.util.Base64; // For encoding byte arrays into storable strings
 
 import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.data.entities.Patient;
+import com.example.hospimanagmenetapp.data.entities.Staff;
 import com.example.hospimanagmenetapp.data.entities.Vitals;
 
 import java.nio.ByteBuffer;
@@ -94,6 +95,65 @@ public class EncryptionManager {
 
         byte[] plaintextBytes = cipher.doFinal(ciphertext);
         return new String(plaintextBytes, "UTF-8");
+    }
+
+    public static Staff decryptStaff(Staff encryptedStaff) throws Exception {
+        if (encryptedStaff == null) return null;
+
+        EncryptionManager em = new EncryptionManager();
+        Staff decryptedStaff = new Staff();
+
+        // Copy non-encrypted fields directly
+        decryptedStaff.id = encryptedStaff.id;
+        decryptedStaff.role = encryptedStaff.role;
+        decryptedStaff.expertise = encryptedStaff.expertise;
+
+        // Decrypt sensitive fields
+        decryptedStaff.fullName = em.decrypt(encryptedStaff.fullName);
+        decryptedStaff.email = em.decrypt(encryptedStaff.email);
+        decryptedStaff.adminPin = em.decrypt(encryptedStaff.adminPin); // decrypts null to null safely
+
+        return decryptedStaff;
+    }
+
+    public static Staff encryptStaff(Staff decryptedStaff) throws Exception {
+        if (decryptedStaff == null) return null;
+
+        EncryptionManager em = new EncryptionManager();
+        Staff encryptedStaff = new Staff();
+
+        // Copy non-encrypted fields directly
+        encryptedStaff.id = decryptedStaff.id;
+        encryptedStaff.role = decryptedStaff.role;
+        encryptedStaff.expertise = decryptedStaff.expertise;
+
+        // Encrypt sensitive fields
+        encryptedStaff.fullName = em.encrypt(decryptedStaff.fullName);
+        encryptedStaff.email = em.encrypt(decryptedStaff.email);
+        encryptedStaff.adminPin = em.encrypt(decryptedStaff.adminPin); // encrypts null to null safely
+
+        return encryptedStaff;
+    }
+
+    public static Appointment encryptAppointment(Appointment decryptedAppointment) throws Exception {
+        if (decryptedAppointment == null) return null;
+
+        EncryptionManager em = new EncryptionManager();
+        Appointment encryptedAppointment = new Appointment();
+
+        // Copy non-encrypted fields directly
+        encryptedAppointment.id = decryptedAppointment.id;
+        encryptedAppointment.startTime = decryptedAppointment.startTime;
+        encryptedAppointment.endTime = decryptedAppointment.endTime;
+        encryptedAppointment.clinicianId = decryptedAppointment.clinicianId;
+        encryptedAppointment.clinic = decryptedAppointment.clinic;
+        encryptedAppointment.status = decryptedAppointment.status;
+
+        // Encrypt sensitive fields
+        encryptedAppointment.enPatientNhsNumber = em.encrypt(decryptedAppointment.enPatientNhsNumber);
+        encryptedAppointment.enClinicianName = em.encrypt(decryptedAppointment.enClinicianName);
+
+        return encryptedAppointment;
     }
 
     public static List<Appointment> decryptAppointments(List<Appointment> appointments) throws Exception {
