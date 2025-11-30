@@ -10,12 +10,13 @@ import android.widget.Toast;
 
 import com.example.hospimanagmenetapp.feature.ehr.ui.BarcodeScannerActivity;
 import com.example.hospimanagmenetapp.security.RuntimeGuard;
+import com.example.hospimanagmenetapp.ui.BaseActivity;
 import com.example.hospimanagmenetapp.ui.PatientLoginActivity;
 import com.example.hospimanagmenetapp.ui.AdminLoginActivity;        // Screen for admin sign-in
 import com.example.hospimanagmenetapp.ui.PatientRegistrationActivity; // Screen to register patients
 import com.example.hospimanagmenetapp.util.SessionManager;          // Helper for simple session storage
 
-public class MainActivity extends AppCompatActivity { // Entry Activity shown at app launch
+public class MainActivity extends BaseActivity { // Entry Activity shown at app launch
 
     private TextView tvWelcome;       // Header showing session state
     private Button btnAdminPortal;

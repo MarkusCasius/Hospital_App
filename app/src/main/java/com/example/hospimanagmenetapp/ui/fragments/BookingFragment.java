@@ -2,6 +2,7 @@ package com.example.hospimanagmenetapp.ui.fragments;
 
 
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+import static androidx.test.internal.runner.junit4.statement.UiThreadStatement.runOnUiThread;
 
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -18,11 +19,14 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.test.internal.runner.junit4.statement.UiThreadStatement;
 
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.entities.Appointment;
 import com.example.hospimanagmenetapp.data.entities.Clinic;
+import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.entities.Staff;
+import com.example.hospimanagmenetapp.data.repo.EhrRepository;
 import com.example.hospimanagmenetapp.data.repo.StaffRepository;
 import com.example.hospimanagmenetapp.domain.BookOrRescheduleAppointmentUseCase;
 import com.example.hospimanagmenetapp.domain.DetectScheduleConflictsUseCase;
@@ -317,6 +321,17 @@ public class BookingFragment extends Fragment {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
+                EhrRepository ehrRepo = new EhrRepository(requireContext());
+                Patient patientFromDb = ehrRepo.findPatientByDecryptedNhs(nhs);
+
+                if (patientFromDb == null) {
+                    runOnUiThread(() ->
+                            Toast.makeText(getContext(), "Error: No patient found with the provided NHS number.", Toast.LENGTH_LONG).show());
+                    return; // Stop if patient does not exist.
+                }
+
+                final String encryptedNhsFromDb = patientFromDb.enPatientNhsNumber;
+
                 ValidatePatientExistsUseCase validationUseCase = new ValidatePatientExistsUseCase(requireContext());
                 boolean patientExists = validationUseCase.execute(nhs);
 
@@ -338,18 +353,18 @@ public class BookingFragment extends Fragment {
 
                 Appointment appointmentToSave = new Appointment();
                 appointmentToSave.id = currentAppointmentId;
-                appointmentToSave.id = getArguments().getLong("id", 0);
-                appointmentToSave.enPatientNhsNumber = nhs; // Still plaintext here
                 appointmentToSave.startTime = start;
                 appointmentToSave.endTime = end;
-                appointmentToSave.clinicianId = clinicianId;
-                appointmentToSave.enClinicianName = clinicianName; // Still plaintext here
+                appointmentToSave.clinicianId = selectedClinician.id;
                 appointmentToSave.clinic = clinic;
                 appointmentToSave.status = status;
 
-                Appointment encryptedAppointment = EncryptionManager.encryptAppointment(appointmentToSave);
+                // 4. Manually encrypt ONLY the fields that need it. Do NOT re-encrypt the foreign key.
+                appointmentToSave.enPatientNhsNumber = encryptedNhsFromDb; // Use the key from the DB
+                appointmentToSave.enClinicianName = new EncryptionManager().encrypt(selectedClinician.fullName); // Encrypt the clinician name
 
-                new BookOrRescheduleAppointmentUseCase(requireContext()).execute(encryptedAppointment);
+
+                new BookOrRescheduleAppointmentUseCase(requireContext()).execute(appointmentToSave);
 
                 rateLimiter.recordNewAttempt();
 
@@ -357,7 +372,7 @@ public class BookingFragment extends Fragment {
                     Toast.makeText(getContext(), "Appointment confirmed.", Toast.LENGTH_LONG).show();
                     requireActivity().getSupportFragmentManager().popBackStack(); // Go back to list
                 });
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Log.e(TAG, "Failed to save appointment", e);
                 requireActivity().runOnUiThread(() ->
                         Toast.makeText(getContext(), "Booking failed. Please try again.", Toast.LENGTH_LONG).show());

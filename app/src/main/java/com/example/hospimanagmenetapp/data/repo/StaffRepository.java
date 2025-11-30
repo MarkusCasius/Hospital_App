@@ -13,18 +13,21 @@ import java.util.List;
 
 import retrofit2.Response;
 
+// Repository for handling all staff-related data operations.
 public class StaffRepository {
 
     private static final String TAG = "StaffRepository";
     private final StaffDao staffDao;
     private final ApiClient api;
 
+    // Constructs the StaffRepository, initializing all necessary DAOs and services.
     public StaffRepository(Context context) {
         AppDatabase db = AppDatabase.getInstance(context);
         this.staffDao = db.staffDao();
         this.api = new ApiClient(context);
     }
 
+    // Central method to refresh the local cache of staff from the network.
     private void refreshStaffCache() {
         try {
             Log.d(TAG, "Fetching staff from network to refresh cache.");
@@ -60,24 +63,27 @@ public class StaffRepository {
         }
     }
 
+    // Gets all staff members, ensuring the cache is refreshed first.
     public List<Staff> getAndCacheAllStaff() {
         refreshStaffCache();
         return staffDao.getAll();
     }
 
+    // Gets all staff members with the 'CLINICIAN' role, ensuring the cache is refreshed first.
     public List<Staff> getAndCacheClinicians() {
         refreshStaffCache();
         Log.d(TAG, "Fetching clinicians from local database.");
         return staffDao.getClinicians();
     }
 
+    // Registers a new staff member via the network and caches the result locally.
     public void registerStaff(Staff staff) throws Exception {
         StaffDto dto = mapToDto(staff); // Map entity to DTO
 
         Log.d(TAG, "Registering staff via network: " + staff.email);
         Response<StaffDto> response = api.staffApi().registerStaff(dto).execute();
 
-        // 2. On success, save the response to the local DAO
+        // On success, save the response to the local DAO
         if (response.isSuccessful() && response.body() != null) {
             Log.d(TAG, "Network registration successful. Caching to local DB.");
             Staff savedStaff = mapToEntity(response.body()); // Map response DTO back to entity
@@ -87,6 +93,7 @@ public class StaffRepository {
         }
     }
 
+    // Deletes a staff member via the network and removes them from the local database on success.
     public void deleteStaff(Staff staff) throws Exception{
         Log.d(TAG, "Deleting staff via network: ID " + staff.id);
         Response<Void> response = api.staffApi().deleteStaff(staff.id).execute();

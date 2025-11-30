@@ -18,6 +18,35 @@ import com.example.hospimanagmenetapp.data.entities.Patient; // Entity mapped to
 import com.example.hospimanagmenetapp.data.entities.Staff;   // Entity mapped to a table
 import com.example.hospimanagmenetapp.data.entities.Vitals;
 
+/**
+ * Defines the application's database schema and serves as the main access point to the persisted data.
+ *
+ * This database manages the core entities of the hospital management system and their relationships:
+ *
+ * ### Primary Entities:
+ * - {@link Patient}: The central entity representing a patient. Identified by a unique NHS number.
+ * - {@link Staff}: Represents employees (Admins, Clinicians, etc.). Identified by a unique auto-generated ID.
+ * - {@link Clinic}: Represents a physical clinic location. Identified by a unique name.
+ *
+ * ### Relationships:
+ *
+ * 1.  **Appointment Relationships (Many-to-One):**
+ *     - An {@link Appointment} has a **Many-to-One** relationship with {@link Patient}. (Many appointments can belong to one patient).
+ *     - An {@link Appointment} has a **Many-to-One** relationship with {@link Staff}. (Many appointments can be assigned to one clinician).
+ *     - An {@link Appointment} has a **Many-to-One** relationship with {@link Clinic}. (Many appointments can occur at one clinic).
+ *
+ * 2.  **Clinical Record Relationship (One-to-One):**
+ *     - A {@link ClinicalRecord} has a **One-to-One** relationship with {@link Patient}. (Each patient has exactly one clinical record).
+ *
+ * 3.  **Vitals Relationship (One-to-Many):**
+ *     - A {@link Vitals} record has a **Many-to-One** relationship with {@link Patient}. (This is the inverse of One-to-Many: A patient can have many vitals records).
+ *
+ * ### Integrity Rules (defined by Foreign Keys):
+ * - If a `Patient` is deleted, all of their associated `Appointments`, `ClinicalRecords`, and `Vitals` are also deleted (`onDelete = CASCADE`).
+ * - If a `Staff` member (clinician) is deleted, the `clinicianId` in their associated `Appointments` is set to `NULL` (`onDelete = SET_NULL`).
+ * - A `Clinic` cannot be deleted if it still has associated `Appointments` (`onDelete = RESTRICT`).
+ */
+
 @Database(entities = {Patient.class, Staff.class, Appointment.class, ClinicalRecord.class, Vitals.class, Clinic.class}, version = 3, exportSchema = false)
 //  Declares the Room database: which entities it manages, the schema version,
 //   and whether to export the schema as JSON for tooling (false = do not export).

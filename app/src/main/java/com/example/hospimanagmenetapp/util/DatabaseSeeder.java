@@ -11,6 +11,7 @@ import com.example.hospimanagmenetapp.data.entities.Staff;
 import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
 import com.example.hospimanagmenetapp.security.EncryptionManager;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
 // For testing. The seeder loads static data into the database the first time the app is initialised for testing.
@@ -31,6 +32,8 @@ public class DatabaseSeeder {
         }
 
         Log.d(TAG, "Database not seeded. Starting seed process.");
+
+        final CountDownLatch latch = new CountDownLatch(1);
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
             AppDatabase db = AppDatabase.getInstance(context);
@@ -45,8 +48,21 @@ public class DatabaseSeeder {
 
             } catch (Exception e) {
                 Log.e(TAG, "Failed to seed database", e);
+            } finally {
+                latch.countDown();
             }
         });
+
+        try {
+            // This makes the main thread (or wherever seed() was called from)
+            // wait until latch.countDown() is called.
+            Log.d(TAG, "Waiting for seeder to complete...");
+            latch.await();
+            Log.d(TAG, "Seeder finished. Proceeding.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.e(TAG, "Seeder was interrupted.", e);
+        }
     }
 
     private static void seedStaff(Context context, AppDatabase db) throws Exception {

@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,12 +19,15 @@ import com.example.hospimanagmenetapp.data.entities.ClinicalRecord;
 import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.repo.EhrRepository;
 import com.example.hospimanagmenetapp.security.RuntimeGuard;
+import com.example.hospimanagmenetapp.security.auth.BiometricLoginCoordinator;
 import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
+import com.example.hospimanagmenetapp.ui.BaseActivity;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-public class PatientSummaryActivity extends AppCompatActivity {
+public class PatientSummaryActivity extends BaseActivity {
 
     private EhrRepository ehrRepository;
     private Spinner spPatients;
@@ -36,23 +40,42 @@ public class PatientSummaryActivity extends AppCompatActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-
         if (RuntimeGuard.isEnvironmentUnsafe()) {
             Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        setContentView(R.layout.activity_patient_summary);
+        super.onCreate(savedInstanceState);
 
-        if (!RbacPolicyEvaluator.canViewEhr(this)) {
+        boolean bypassRbac = getIntent().getBooleanExtra("bypassRbacCheck", false);
+
+        if (!bypassRbac && !RbacPolicyEvaluator.canViewEhr(this)) {
             Toast.makeText(this, "Access Denied. You do not have permission to view this page.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
+        new BiometricLoginCoordinator().authenticate(this, new BiometricLoginCoordinator.Callback() {
+            @Override
+            public void onSuccess() {
+                setContentView(R.layout.activity_patient_summary);
+                initializeViewsAndData();
+            }
+
+            @Override
+            public void onFailure(String reason) {
+                setContentView(R.layout.activity_patient_summary);
+                initializeViewsAndData();
+//                runOnUiThread(() -> {
+//                    Toast.makeText(PatientSummaryActivity.this, "Authentication required: " + reason, Toast.LENGTH_LONG).show();
+//                    finish();
+//                });
+            }
+        });
+    }
+
+    private void initializeViewsAndData() {
         ehrRepository = new EhrRepository(this);
         spPatients = findViewById(R.id.spPatients);
         tvHeader = findViewById(R.id.tvPatientHeader);
@@ -138,28 +161,51 @@ public class PatientSummaryActivity extends AppCompatActivity {
     }
 
     private void saveClinicalRecord() {
-        if (currentRecord == null) {
-            Toast.makeText(this, "No record loaded to save.", Toast.LENGTH_SHORT).show();
+        if (spPatients.getSelectedItem() == null || patientList == null || patientList.isEmpty()) {
+            Toast.makeText(this, "Please select a patient.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Patient selectedPatient = patientList.get(spPatients.getSelectedItemPosition());
         final String decryptedNhsNumber = selectedPatient.enPatientNhsNumber;
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                ClinicalRecord recordToSave;
 
-        currentRecord.problems = etProblems.getText().toString();
-        currentRecord.allergies = etAllergies.getText().toString();
-        currentRecord.medications = etMedications.getText().toString();
+                if (currentRecord != null) {
 
-        ehrRepository.updateClinicalRecord(currentRecord, updatedRecord -> {
-            if (updatedRecord != null) {
-                Toast.makeText(this, "Clinical record updated successfully.", Toast.LENGTH_SHORT).show();
-                // Reload the data to confirm it's saved
-                loadClinicalRecord(decryptedNhsNumber);
-            } else {
-                Toast.makeText(this, "Failed to update clinical record.", Toast.LENGTH_SHORT).show();
+                    recordToSave = currentRecord;
+                } else {
+
+                    Patient patientFromDb = ehrRepository.findPatientByDecryptedNhs(decryptedNhsNumber);
+                    if (patientFromDb == null) {
+                        runOnUiThread(() -> Toast.makeText(this, "Error: Cannot find patient in database.", Toast.LENGTH_LONG).show());
+                        return;
+                    }
+
+                    recordToSave = new ClinicalRecord();
+                    recordToSave.enPatientNhs = patientFromDb.enPatientNhsNumber;
+                }
+
+                recordToSave.problems = etProblems.getText().toString();
+                recordToSave.allergies = etAllergies.getText().toString();
+                recordToSave.medications = etMedications.getText().toString();
+
+                ehrRepository.updateClinicalRecord(recordToSave, updatedRecord -> {
+                    if (updatedRecord != null) {
+                        Toast.makeText(this, "Clinical record updated successfully.", Toast.LENGTH_SHORT).show();
+                        loadClinicalRecord(decryptedNhsNumber);
+                    } else {
+                        Toast.makeText(this, "Failed to update clinical record.", Toast.LENGTH_SHORT).show();
+                    }
+
+                });
+            } catch (Exception e) {
+                Log.e("PatientSummary", "Failed to save clinical record", e);
+                runOnUiThread(() -> Toast.makeText(this, "An unexpected error occurred.", Toast.LENGTH_SHORT).show());
             }
         });
     }
+
 
     private void clearClinicalData() {
         this.currentRecord = null;

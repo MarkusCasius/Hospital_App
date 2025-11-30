@@ -5,6 +5,8 @@ import androidx.room.Entity;         // Marks this class as a Room table
 import androidx.room.Index;          // Allows creating DB indices for faster lookups/uniqueness
 import androidx.room.PrimaryKey;     // Identifies the primary key column
 
+// Represents a single patient record in database
+// Primary entity referenced by Appointments, Clinical Records and Vitals
 @Entity(
         tableName = "patients",                                  // Actual SQLite table name
         indices = {@Index(value = {"enPatientNhsNumber"}, unique = true)} // Unique index so each NHS number appears only once

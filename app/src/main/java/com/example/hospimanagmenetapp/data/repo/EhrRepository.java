@@ -25,8 +25,9 @@ import java.util.function.Consumer;
 
 import retrofit2.Response;
 
-// A class for handling all the database interactions via calling the API. Designed with offline-first
-// principles
+// A repository for handling all EHR (Electronic Health Record) data interactions,
+// including patients, clinical records, and vitals.
+// It coordinates between the network API and local database.
 
 public class EhrRepository {
     private static final String TAG = "EhrRepository";
@@ -36,6 +37,7 @@ public class EhrRepository {
     private final EncryptionManager encryptionManager;
     private final ApiClient api;
 
+    // Constructs the EhrRepository, initializing all necessary DAOs and services.
     public EhrRepository(Context context) {
         AppDatabase db = AppDatabase.getInstance(context);
         this.patientDao = db.patientDao();
@@ -51,6 +53,7 @@ public class EhrRepository {
 
     // -- Patient Methods --
 
+    // Refreshes the local patient cache by fetching all patients from the network API.
     public void refreshPatientCache() {
         try {
             // Mock network
@@ -76,16 +79,18 @@ public class EhrRepository {
         }
     }
 
+    // Gets all patients, ensuring the local cache is refreshed from the network first.
     public List<Patient> getAndCacheAllPatients() {
         refreshPatientCache();
         return patientDao.getAll();
     }
 
+    // Decrypts a list of encrypted Patient objects.
     public List<Patient> getDecryptedPatients(List<Patient> encryptedPatients) throws Exception {
         return EncryptionManager.decryptPatients(encryptedPatients);
     }
 
-
+    // Asynchronously gets all patients, decrypts them, and returns them via a callback.
     public void getAllDecryptedPatients(Consumer<List<Patient>> callback) {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Patient> encryptedPatients = getAndCacheAllPatients();
@@ -99,6 +104,7 @@ public class EhrRepository {
         });
     }
 
+    // Saves a new patient to the network and, upon success, to the local database.
     public void savePatient(Patient patient) throws Exception {
         // Encrypt the patient data before sending or saving
         Patient encryptedPatient = new Patient();
@@ -126,6 +132,7 @@ public class EhrRepository {
         }
     }
 
+    // Asynchronously gets a patient's clinical record, refreshing from the network first.
     public void getClinicalRecord(String nhsNumber, Consumer<ClinicalRecord> callback) {
         Executors.newSingleThreadExecutor().execute(() -> {
             // Mock Network call
@@ -162,6 +169,7 @@ public class EhrRepository {
         });
     }
 
+    // Asynchronously creates or updates a clinical record on the network and caches the result locally.
     public void updateClinicalRecord(ClinicalRecord record, Consumer<ClinicalRecord> callback) {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
@@ -183,8 +191,25 @@ public class EhrRepository {
         });
     }
 
+    // Finds a patient by their decrypted NHS number by searching the local database.
+    public Patient findPatientByDecryptedNhs(String decryptedNhsNumber) {
+        List<Patient> allPatients = getAndCacheAllPatients();
+        for (Patient patient : allPatients) {
+            try {
+                String decryptedNhs = encryptionManager.decrypt(patient.enPatientNhsNumber);
+                if (decryptedNhsNumber.equals(decryptedNhs)) {
+                    return patient; // Return the full patient object (which has the encrypted NHS)
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to decrypt NHS number for patient ID: " + patient.id, e);
+            }
+        }
+        return null; // Return null if no patient is found
+    }
+
     // -- Vitals Methods --
 
+    // Refreshes the local cache of vitals for a specific patient from the network.
     private void refreshVitalsCache(String decryptedNhsNumber) {
         try {
             Log.d(TAG, "Refreshing vitals from network");
@@ -208,6 +233,7 @@ public class EhrRepository {
         }
     }
 
+    // Saves a vitals record to the local database for later synchronization.
     public void saveVitals(Vitals vitals, Consumer<Boolean> callback) {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
@@ -220,6 +246,7 @@ public class EhrRepository {
         });
     }
 
+    // Gets all vitals for a specific patient, refreshing from the network first.
     public List<Vitals> getAllVitalsForPatient(String decryptedNhsNumber) {
         refreshVitalsCache(decryptedNhsNumber);
 
@@ -239,6 +266,7 @@ public class EhrRepository {
         return patientVitals;
     }
 
+    // Attempts to sync a single vitals record to the network.
     public boolean syncVitals(Vitals vitals) {
         try {
             VitalsDto dto = mapToDto(vitals);

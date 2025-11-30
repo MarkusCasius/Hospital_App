@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.hospimanagmenetapp.R;
+import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.entities.Vitals;
 import com.example.hospimanagmenetapp.data.repo.EhrRepository;
 import com.example.hospimanagmenetapp.feature.ehr.ui.adapters.VitalsAdapter;
@@ -153,7 +154,16 @@ public class VitalsActivity extends AppCompatActivity {
     }
 
     private void saveVitals() {
+        Executors.newSingleThreadExecutor().execute(() -> {
         try {
+
+            Patient patientFromDb = ehrRepository.findPatientByDecryptedNhs(patientNhsNumber);
+            if (patientFromDb == null) {
+                runOnUiThread(() -> Toast.makeText(this, "Error: Cannot find patient in database to link vitals.", Toast.LENGTH_LONG).show());
+                return; // Stop if the patient doesn't exist
+            }
+            String validEncryptedForeignKey = patientFromDb.enPatientNhsNumber;
+
             Vitals vitals = new Vitals();
             vitals.enPatientNhsNumber = patientNhsNumber;
             vitals.temperature = Float.parseFloat(etTemperature.getText().toString());
@@ -162,16 +172,18 @@ public class VitalsActivity extends AppCompatActivity {
             vitals.diastolic = Integer.parseInt(etDiastolic.getText().toString());
             vitals.timestamp = System.currentTimeMillis();
             vitals.synced = false;
-
             Vitals encryptedVitals = EncryptionManager.encryptVitals(vitals);
 
+            encryptedVitals.enPatientNhsNumber = validEncryptedForeignKey;
 
             ehrRepository.saveVitals(encryptedVitals, success -> {
                 if (success) {
-                    Toast.makeText(this, "Vitals saved locally.", Toast.LENGTH_SHORT).show();
-                    clearInputFields();
-                    currentPage = 1; // Go to the first page to see the new entry
-                    loadPage(); // Refresh the list
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Vitals saved locally.", Toast.LENGTH_SHORT).show();
+                        clearInputFields();
+                        currentPage = 1; // Go to the first page to see the new entry
+                        loadPage(); // Refresh the list
+                    });
                 } else {
                     Toast.makeText(this, "Failed to save vitals.", Toast.LENGTH_SHORT).show();
                 }
@@ -181,6 +193,7 @@ public class VitalsActivity extends AppCompatActivity {
         } catch (Exception e) {
             Toast.makeText(this, "An error occurred: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    });
     }
 
     private void clearInputFields() {

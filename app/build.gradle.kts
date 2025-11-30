@@ -95,4 +95,9 @@ dependencies { // Libraries this module depends on
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test:rules:1.5.0")
 
+    // --- Lab 4 --
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("org.mockito:mockito-core:5.18.0")
+    androidTestImplementation("org.mockito:mockito-android:5.12.0") // For instrumented tests
+
 }

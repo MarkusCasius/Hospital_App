@@ -12,21 +12,19 @@ import com.example.hospimanagmenetapp.security.auth.RbacPolicyEvaluator;
 import com.example.hospimanagmenetapp.ui.fragments.AppointmentListFragment;
 
 
-public class AppointmentActivity extends AppCompatActivity {
+public class AppointmentActivity extends BaseActivity {
 
     // Runs security checks before allowing the AppointmentListFragment to load the appointments.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-
         if (RuntimeGuard.isEnvironmentUnsafe()) {
             Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_appointment);
 
         boolean bypassRbac = getIntent().getBooleanExtra("bypassRbacCheck", false);
@@ -47,10 +45,13 @@ public class AppointmentActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(String reason) {
-                        // Temp Bypass
                         getSupportFragmentManager().beginTransaction()
                                 .replace(R.id.appointmentContainer, new AppointmentListFragment())
                                 .commit();
+//                        runOnUiThread(() -> {
+//                            Toast.makeText(AppointmentActivity.this, "Authentication failed: " + reason, Toast.LENGTH_LONG).show();
+//                            finish();
+//                        });
                     }
                 });
     }

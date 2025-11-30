@@ -40,8 +40,6 @@ public class AdminPortalActivityTest {
 
     private AppDatabase database;
 
-    // Use a rule to launch the activity for each test
-    // We pass an intent with bypassCheck = true to skip the admin login check for testing
     @Rule
     public ActivityScenarioRule<AdminPortalActivity> activityRule = new ActivityScenarioRule<>(
             new Intent(ApplicationProvider.getApplicationContext(), AdminPortalActivity.class)
@@ -50,10 +48,7 @@ public class AdminPortalActivityTest {
 
     @Before
     public void setUp() {
-        // Use an in-memory database for testing to ensure tests are isolated
         Context context = ApplicationProvider.getApplicationContext();
-        // Get a reference to the real database and clear it before each test
-        // This ensures a clean state and that the app's own logic is used
         database = AppDatabase.getInstance(context);
         database.clearAllTables();
     }
@@ -102,40 +97,30 @@ public class AdminPortalActivityTest {
     }
 
     @Test
-    public void deleteStaff_removesFromRecyclerView() {
-        // Arrange: Register a new CLINICIAN staff member to be deleted
-        String nameToDelete = "Dr. Removable";
-        String emailToDelete = "delete.me@hospital.com";
+    public void createAndThenDeleteStaffMember_isSuccessful() {
+        // Arrange: Define a new staff member to be created and then deleted
+        String name = "Temporary User";
+        String email = "temp.user@hospital.com";
 
-        onView(withId(R.id.etStaffName)).perform(typeText(nameToDelete));
-        onView(withId(R.id.etStaffEmail)).perform(typeText(emailToDelete));
+        // Act: Fill form, select a role, and register
+        onView(withId(R.id.etStaffName)).perform(typeText(name));
+        onView(withId(R.id.etStaffEmail)).perform(typeText(email), closeSoftKeyboard());
         onView(withId(R.id.spRole)).perform(click());
-        onData(allOf(is(instanceOf(Staff.Role.class)), is(Staff.Role.CLINICIAN))).perform(click());
+        onData(allOf(is(instanceOf(Staff.Role.class)), is(Staff.Role.RECEPTION))).perform(click());
         onView(withId(R.id.btnRegisterStaff)).perform(click());
 
-        // Wait for UI to update
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // Assert (Create): Verify the user appears in the list
+        try { Thread.sleep(1500); } catch (InterruptedException e) {} // Wait for DB and UI
+        onView(withId(R.id.rvStaff)).check(matches(hasDescendant(withText(name))));
 
-        // Find the item in the RecyclerView, click it, and confirm deletion
+        // Act: Click on the newly created item and confirm deletion
         onView(withId(R.id.rvStaff))
-                .perform(actionOnItem(hasDescendant(withText(nameToDelete)), click()));
-
-        // The confirmation dialog should appear. Click the "Delete" button.
+                .perform(actionOnItem(hasDescendant(withText(name)), click()));
         onView(withText("Delete")).perform(click());
 
-        // Assert: The RecyclerView should no longer contain the deleted staff member
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        onView(withId(R.id.rvStaff))
-                .check(matches(not(hasDescendant(withText(nameToDelete)))));
+        // Assert (Delete): Verify the user is no longer in the list
+        try { Thread.sleep(1500); } catch (InterruptedException e) {} // Wait for DB and UI
+        onView(withId(R.id.rvStaff)).check(matches(not(hasDescendant(withText(name)))));
     }
 
     @Test
@@ -150,7 +135,6 @@ public class AdminPortalActivityTest {
         onData(allOf(is(instanceOf(Staff.Role.class)), is(Staff.Role.RECEPTION))).perform(click());
         onView(withId(R.id.btnRegisterStaff)).perform(click());
 
-        // Wait for the list to refresh and clear the form
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {

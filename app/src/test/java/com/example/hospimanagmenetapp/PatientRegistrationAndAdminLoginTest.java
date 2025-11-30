@@ -12,7 +12,7 @@ import com.example.hospimanagmenetapp.util.ValidationUtils;
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
-public class UnitTest {
+public class PatientRegistrationAndAdminLoginTest {
 
     // Unit Tests for PatientRegistrationActivity Logic
 

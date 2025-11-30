@@ -98,8 +98,7 @@ public class AppointmentActivityTest {
     public void createNewAppointment_isSuccessful() {
 
         // Arrange: Details for the new appointment
-        String patientNhs = "6810564195";
-        // Clinician name from the seeder data
+        String patientNhs = "1234567890";
         String clinicianToSelect = "Dr. Emily Carter";
 
         // Wait for the AppointmentListFragment to load and then click the FAB.

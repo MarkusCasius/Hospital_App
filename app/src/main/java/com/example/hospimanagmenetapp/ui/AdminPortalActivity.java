@@ -32,7 +32,7 @@ import java.util.List;               // List interface for collections
 import java.util.concurrent.Executors; // Run DB work off the main thread
 
 
-public class AdminPortalActivity extends AppCompatActivity { // Admin portal: manage staff accounts
+public class AdminPortalActivity extends BaseActivity { // Admin portal: manage staff accounts
 
     private StaffRepository staffRepository;
     private EditText etName, etEmail, etPin;   // Inputs for staff name/email and admin PIN (if role is ADMIN)
@@ -43,14 +43,14 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
-        super.onCreate(savedInstanceState);
-
-
         if (RuntimeGuard.isEnvironmentUnsafe()) {
             Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
+
+        setContentView(R.layout.activity_admin_portal);
+        super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_admin_portal);  // Inflate the admin portal layout
         staffRepository = new StaffRepository(this); // Initialize repository
@@ -145,11 +145,9 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
             return;
         }
 
-        // Do DB I/O off the main thread
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 EncryptionManager encryptionManager = new EncryptionManager();
-                StaffDao dao = AppDatabase.getInstance(getApplicationContext()).staffDao();
 
                 List<Staff> allStaff = staffRepository.getAndCacheAllStaff();
                 for (Staff staffMember : allStaff) {
@@ -166,7 +164,7 @@ public class AdminPortalActivity extends AppCompatActivity { // Admin portal: ma
                     }
                 }
 
-                Staff s = new Staff();          // Create new entity
+                Staff s = new Staff(); // Create new entity
                 s.fullName = name;
                 s.email = email;
                 s.role = role;

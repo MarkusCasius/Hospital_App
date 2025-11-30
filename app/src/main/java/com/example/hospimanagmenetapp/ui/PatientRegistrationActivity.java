@@ -22,7 +22,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.concurrent.Executors; // For running DB work off the main thread
 
-public class PatientRegistrationActivity extends AppCompatActivity { // Screen to capture and save a patient
+public class PatientRegistrationActivity extends BaseActivity { // Screen to capture and save a patient
 
     // Activity for saving patients to the database, with validation to ensure that it is a legal
     // operation before posting it to the database.
@@ -34,14 +34,12 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // Activity creation lifecycle
-        super.onCreate(savedInstanceState);
-
         if (RuntimeGuard.isEnvironmentUnsafe()) {
             Toast.makeText(this, "Application cannot run in this environment.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
-
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_patient_registration); // Inflate the registration form layout
         ehrRepository = new EhrRepository(this);
 
@@ -84,7 +82,6 @@ public class PatientRegistrationActivity extends AppCompatActivity { // Screen t
         // Run database
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                EncryptionManager encryptionManager = new EncryptionManager();
                 if (new ValidatePatientExistsUseCase(this).execute(nhs)) {
                     runOnUiThread(() -> Toast.makeText(this, "Patient with this NHS number already exists.", Toast.LENGTH_SHORT).show());
                     return;

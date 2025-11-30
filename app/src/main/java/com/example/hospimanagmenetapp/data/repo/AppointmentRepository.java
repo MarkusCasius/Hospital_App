@@ -17,8 +17,7 @@ import java.util.List;
 
 import retrofit2.Response;
 
-// A class for handling all the database interactions via calling the API. Designed with offline-first
-// principles
+// Repository for handling all appointment and clinic-related data operations.
 
 public class AppointmentRepository {
 
@@ -28,6 +27,7 @@ public class AppointmentRepository {
     private final ApiClient api;
     private final ClinicDao clinicDao;
 
+    // Constructs the AppointmentRepository, initializing all necessary DAOs and services.
     public AppointmentRepository(Context ctx) {
         AppDatabase db = AppDatabase.getInstance(ctx);
         this.dao = db.appointmentDao();
@@ -35,7 +35,7 @@ public class AppointmentRepository {
         this.api = new ApiClient(ctx);
     }
 
-    // Fetches and syncs with the local database any clinics in the external database
+    // Gets all clinics, ensuring the local cache is refreshed from the network first.
     public List<Clinic> getAndCacheClinics() {
         try {
             Log.d(TAG, "Fetching clinics from network to refresh cache.");
@@ -61,7 +61,7 @@ public class AppointmentRepository {
         return clinicDao.getAll();
     }
 
-    // Fetches and syncs with the local database any appointments in the external database
+    // Refreshes the local appointment cache by fetching all appointments from the network.
     private void refreshCachedAppointments() {
         try {
             // fetch mock network first
@@ -86,28 +86,31 @@ public class AppointmentRepository {
         }
     }
 
+    // Gets appointments within a specific time range, after refreshing the cache.
     public List<Appointment> getAppointmentsBetween(String clinic, long startTime, long endTime) {
         refreshCachedAppointments();
         return dao.getAppointmentsForClinicBetween(clinic, startTime, endTime);
     }
 
+    // Gets appointments before a specific time, after refreshing the cache.
     public List<Appointment> getAppointmentsBefore(String clinic, long endTime) {
         refreshCachedAppointments();
         return dao.getAppointmentsForClinicBefore(clinic, endTime);
     }
 
+    // Gets appointments after a specific time, after refreshing the cache.
     public List<Appointment> getAppointmentsAfter(String clinic, long startTime) {
         refreshCachedAppointments();
         return dao.getAppointmentsForClinicAfter(clinic, startTime);
     }
 
+    // Gets appointments before a specific time, after refreshing the cache.
     public List<Appointment> getAllAppointmentsForClinic(String clinic) {
         refreshCachedAppointments();
         return dao.getAllAppointmentsForClinic(clinic);
     }
 
-    // Booking or rescheduling appointments. After getting the mapping it to the dto, it sends a call to the API
-    // Then saves locally as the database isn't set up
+    // Books or reschedules an appointment by calling the network API and caching the result.
     public Appointment bookOrReschedule(Appointment appt) throws Exception {
         AppointmentDto dto = new AppointmentDto();
         dto.id = appt.id;

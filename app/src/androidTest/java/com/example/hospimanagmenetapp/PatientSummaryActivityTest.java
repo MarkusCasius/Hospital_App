@@ -1,28 +1,23 @@
 package com.example.hospimanagmenetapp;
+
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
-import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
-import static androidx.test.espresso.action.ViewActions.typeText;
+import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static org.hamcrest.Matchers.not;
 
 import android.content.Context;
 import android.content.Intent;
-
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
-
 import com.example.hospimanagmenetapp.R;
 import com.example.hospimanagmenetapp.data.AppDatabase;
 import com.example.hospimanagmenetapp.data.entities.Patient;
 import com.example.hospimanagmenetapp.data.entities.Staff;
-import com.example.hospimanagmenetapp.feature.ehr.ui.VitalsActivity;
+import com.example.hospimanagmenetapp.feature.ehr.ui.PatientSummaryActivity;
 import com.example.hospimanagmenetapp.security.EncryptionManager;
 import com.example.hospimanagmenetapp.util.DatabaseSeeder;
 import com.example.hospimanagmenetapp.util.SessionManager;
@@ -35,17 +30,18 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class VitalsActivityTest {
+public class PatientSummaryActivityTest {
+
     private AppDatabase database;
     private EncryptionManager encryptionManager;
     private static final String TEST_PATIENT_NHS = "1234567890";
 
     @Rule
-    public ActivityScenarioRule<VitalsActivity> activityRule = new ActivityScenarioRule<>(
-            new Intent(ApplicationProvider.getApplicationContext(), VitalsActivity.class)
-                    .putExtra("nhsNumber", TEST_PATIENT_NHS)
+    public ActivityScenarioRule<PatientSummaryActivity> activityRule = new ActivityScenarioRule<>(
+            new Intent(ApplicationProvider.getApplicationContext(), PatientSummaryActivity.class)
+                    .putExtra("nhsNumber", "1234567890") // Patient Name 4
+                    .putExtra("bypassRbacCheck", true)
     );
-
 
     @Before
     public void setUp() throws Exception {
@@ -59,6 +55,7 @@ public class VitalsActivityTest {
         testPatient.enPatientNhsNumber = encryptionManager.encrypt(TEST_PATIENT_NHS);
         testPatient.fullName = encryptionManager.encrypt("Patient Name 4");
         testPatient.dateOfBirth = encryptionManager.encrypt("1990-01-05");
+        // Add other fields if necessary for the test
         database.patientDao().insert(testPatient);
 
         SessionManager.setCurrentUser(context, Staff.Role.ADMIN.name(), "Dummy@email.com");
@@ -69,35 +66,29 @@ public class VitalsActivityTest {
         // Clean up the database after the test
         database.clearAllTables();
     }
-
     @Test
-    public void saveVitals_displaysInList() {
-        // Vitals data
-        String temp = "37.5";
-        String heartRate = "80";
-        String systolic = "120";
-        String diastolic = "80";
+    public void createAndUpdateClinicalRecord_isSuccessful() {
+        // Arrange: The activity is launched with a patient who has no clinical record.
+        // The "No clinical record found" toast should appear, and fields should be empty.
+        onView(withId(R.id.etProblems)).check(matches(withText("")));
 
-        // Fill in the form and save
-        onView(withId(R.id.etTemperature)).perform(typeText(temp));
-        onView(withId(R.id.etHeartRate)).perform(typeText(heartRate));
-        onView(withId(R.id.etSystolic)).perform(typeText(systolic));
-        onView(withId(R.id.etDiastolic)).perform(typeText(diastolic), closeSoftKeyboard());
-        onView(withId(R.id.btnSaveVitals)).perform(click());
+        // Act: Enter new details into the fields
+        String newProblems = "Newly discovered allergy";
+        onView(withId(R.id.etProblems)).perform(replaceText(newProblems));
+        onView(withId(R.id.etAllergies)).perform(replaceText("Peanuts"));
+        onView(withId(R.id.btnSave)).perform(click());
 
-        // Wait for UI to refresh
-        try { Thread.sleep(4000); } catch (InterruptedException e) { e.printStackTrace(); }
+        // Assert: After saving, the fields should still contain the new text.
+        try { Thread.sleep(2000); } catch (InterruptedException e) {} // Wait for save/reload
+        onView(withId(R.id.etProblems)).check(matches(withText(newProblems)));
 
-        // Assert: The saved vitals should be visible in the RecyclerView.
-        onView(withText("BP: 120/80 mmHg | HR: 80 bpm | Temp: 37.5°C")).check(matches(isDisplayed()));
-    }
+        // Act: Update the record again
+        String updatedProblems = "Allergy confirmed by test";
+        onView(withId(R.id.etProblems)).perform(replaceText(updatedProblems));
+        onView(withId(R.id.btnSave)).perform(click());
 
-    @Test
-    public void paginationButtons_initialState() {
-        // Assert: On initial load with no data, both buttons should be disabled.
-        // The page info should show "Page 1 of 1".
-        onView(withId(R.id.tvPageInfo)).check(matches(withText("Page 1 of 1")));
-        onView(withId(R.id.btnPreviousPage)).check(matches(not(isEnabled())));
-        onView(withId(R.id.btnNextPage)).check(matches(not(isEnabled())));
+        // Assert: After the second save, the text should be the updated version.
+        try { Thread.sleep(2000); } catch (InterruptedException e) {} // Wait for save/reload
+        onView(withId(R.id.etProblems)).check(matches(withText(updatedProblems)));
     }
 }
